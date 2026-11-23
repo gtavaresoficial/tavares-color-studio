@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tavares Color Studio — Laboratório de Paletas & Contraste</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' rx='6' fill='%23111113'/%3E%3Ccircle cx='9.5' cy='12' r='4.5' fill='%23F4F4F5'/%3E%3Ccircle cx='14.5' cy='12' r='4.5' stroke='%23A1A1AA' stroke-width='1.75'/%3E%3C/svg%3E" />
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter, Space Grotesk, Syne, Playfair Display, JetBrains Mono -->
@@ -56,4 +57,3456 @@
       width: 6px;
       height: 6px;
     }
-    ::-webkit-scrollbar-track
+    ::-webkit-scrollbar-track {
+      background: #111113;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+
+    /* Sliders neutros */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #27272A;
+      border-radius: 9999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #F4F4F5;
+      border: 2px solid #18181B;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #F4F4F5;
+      border: 2px solid #18181B;
+      cursor: pointer;
+    }
+
+    /* Color picker invisível sobreposto ao swatch */
+    .color-input-hidden {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Grade sutil de fundo no palco */
+    .stage-bg {
+      background-color: #111113;
+      background-image: radial-gradient(#232327 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .dropzone-active {
+      border-color: #F4F4F5 !important;
+      background-color: #202024 !important;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .toast-enter {
+      animation: toastIn 0.2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden selection:bg-zinc-700 selection:text-white">
+
+  <!-- ==================== 1. BARRA SUPERIOR (ESQUERDA: PROPORÇÕES | CENTRO: PALETA | DIREITA: WCAG & EXPORTAR) ==================== -->
+  <header class="shrink-0 bg-studio-panel border-b border-studio-border px-3 py-2.5 z-20">
+    <div class="flex flex-wrap xl:flex-nowrap items-center justify-between gap-2.5">
+
+      <!-- BLOCO ESQUERDO: Identidade, Undo/Redo e Seletor de 6 Proporções -->
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <!-- Marca -->
+        <div class="flex items-center gap-2 pr-1">
+          <div class="w-6 h-6 rounded-md border border-studio-border flex items-center justify-center bg-studio-bg shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <circle cx="9" cy="12" r="5" fill="#F4F4F5" fill-opacity="0.9"/>
+              <circle cx="15" cy="12" r="5" stroke="#A1A1AA" stroke-width="1.75"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold tracking-tight text-studio-text hidden sm:inline">Tavares Color Studio</span>
+        </div>
+
+        <!-- Desfazer / Refazer -->
+        <div class="flex items-center gap-0.5 bg-studio-bg border border-studio-border rounded-lg p-0.5">
+          <button id="btnUndo" type="button" title="Desfazer (Ctrl+Z)"
+            class="p-1.5 rounded-md text-studio-muted hover:text-studio-text hover:bg-studio-elevated disabled:opacity-30 disabled:pointer-events-none transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+            </svg>
+          </button>
+          <button id="btnRedo" type="button" title="Refazer (Ctrl+Y)"
+            class="p-1.5 rounded-md text-studio-muted hover:text-studio-text hover:bg-studio-elevated disabled:opacity-30 disabled:pointer-events-none transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Seletor de Proporções (6 formatos) -->
+        <div class="flex items-center bg-studio-bg border border-studio-border rounded-lg p-0.5" role="group" aria-label="Proporção da Imagem">
+          <button data-ratio="1:1" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors text-studio-muted hover:text-studio-text">1:1</button>
+          <button data-ratio="4:5" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors text-studio-muted hover:text-studio-text">4:5</button>
+          <button data-ratio="4:3" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors text-studio-muted hover:text-studio-text">4:3</button>
+          <button data-ratio="16:9" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors text-studio-muted hover:text-studio-text">16:9</button>
+          <button data-ratio="9:16" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors text-studio-muted hover:text-studio-text">9:16</button>
+          <button data-ratio="20:7" class="ratio-btn px-2 py-1 text-[11px] font-medium rounded-md transition-colors bg-studio-elevated text-studio-text">20:7</button>
+        </div>
+      </div>
+
+      <!-- BLOCO CENTRAL: Painel da Paleta Centralizado (5 Swatches + Harmonia + 3 Randomizadores) -->
+      <div class="order-3 xl:order-2 w-full xl:w-auto xl:flex-1 flex flex-wrap items-center justify-center gap-2">
+        <!-- 5 Swatches Compactos -->
+        <div id="topSwatchesContainer" class="flex flex-wrap items-center justify-center gap-1.5">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+
+        <div class="hidden 2xl:block h-6 w-px bg-studio-border mx-0.5"></div>
+
+        <!-- Controles de Harmonia + 3 Botões de Randomização -->
+        <div class="flex flex-wrap items-center justify-center gap-1.5">
+          <select id="harmonySelect" title="Harmonia Cromática"
+            class="bg-studio-bg border border-studio-border rounded-lg px-2.5 py-1.5 text-xs text-studio-text focus:outline-none focus:border-zinc-500 transition-colors cursor-pointer">
+            <option value="monochromatic">Monocromático</option>
+            <option value="analogous">Análogo</option>
+            <option value="complementary">Complementar</option>
+            <option value="split-complementary">Comp. Dividida</option>
+            <option value="triadic" selected>Tríade</option>
+            <option value="tetradic">Tétrade</option>
+            <option value="editorial">Editorial</option>
+          </select>
+
+          <!-- 3 Botões de Randomização -->
+          <div class="flex items-center bg-studio-bg border border-studio-border rounded-lg p-0.5 gap-0.5">
+            <button id="btnRandomMild" type="button" title="Randomizar Leve (Espaço)"
+              class="px-2.5 py-1 rounded-md text-xs font-medium text-studio-text hover:bg-studio-elevated transition-colors flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-studio-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Leve</span>
+            </button>
+
+            <button id="btnRandomAggressive" type="button" title="Randomizar Agressivo (Shift + Espaço)"
+              class="px-2.5 py-1 rounded-md text-xs font-medium text-studio-text hover:bg-studio-elevated transition-colors flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Agressivo</span>
+            </button>
+
+            <button id="btnRandomHarmony" type="button" title="Randomizar Harmonia + Cores Agressivo (H)"
+              class="px-2.5 py-1 rounded-md text-xs font-semibold bg-studio-elevated hover:bg-studio-hover text-studio-text border border-zinc-700/70 transition-colors flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+              <span>Harmonia</span>
+            </button>
+          </div>
+
+          <!-- Ações Rápidas Discretas: Inverter e Rotacionar -->
+          <div class="hidden sm:flex items-center gap-0.5 bg-studio-bg border border-studio-border rounded-lg p-0.5">
+            <button id="btnInvertPolarity" type="button" title="Inverter Claro/Escuro"
+              class="p-1.5 rounded-md text-studio-muted hover:text-studio-text hover:bg-studio-elevated transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </button>
+            <button id="btnRotateRoles" type="button" title="Rotacionar Papéis das Cores"
+              class="p-1.5 rounded-md text-studio-muted hover:text-studio-text hover:bg-studio-elevated transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO DIREITO: Selo WCAG 2.1 + Toggle Proteção + Botão Exportar -->
+      <div class="order-2 xl:order-3 flex items-center gap-2 shrink-0">
+        <!-- Selo WCAG com toggle de proteção AA+ integrado -->
+        <button id="btnToggleWcag" type="button" title="Alternar proteção automática de legibilidade (WCAG AA+)"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-studio-bg border border-studio-border hover:border-zinc-600 text-xs transition-colors">
+          <span id="headerWcagDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span id="headerWcagRatio" class="font-mono text-studio-text font-medium">12.0:1</span>
+          <span id="headerWcagLevel" class="text-studio-muted text-[11px] font-semibold">AAA</span>
+          <span id="wcagLockBadge" class="ml-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">AA+</span>
+        </button>
+
+        <button id="btnOpenExport" type="button"
+          class="px-3.5 py-1.5 rounded-lg bg-studio-text text-studio-bg hover:bg-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+          </svg>
+          <span>Exportar</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== CORPO PRINCIPAL ==================== -->
+  <div class="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+
+    <!-- ==================== 2. BARRA LATERAL ESQUERDA (FORMAS, TIPOGRAFIA, MÍDIA) ==================== -->
+    <aside id="paramsSidebar" class="w-full lg:w-80 xl:w-[320px] shrink-0 bg-studio-panel border-b lg:border-b-0 lg:border-r border-studio-border flex flex-col min-h-0">
+      <!-- Abas Exclusivas de Composição + Botão Recolher -->
+      <div class="flex items-center border-b border-studio-border p-1.5 gap-1 shrink-0 bg-studio-panel">
+        <nav class="flex-1 grid grid-cols-4 gap-1">
+          <button data-tab="shapes" class="tab-btn py-2 text-[11px] font-medium rounded-lg transition-colors bg-studio-elevated text-studio-text">
+            Formas
+          </button>
+          <button data-tab="typography" class="tab-btn py-2 text-[11px] font-medium rounded-lg transition-colors text-studio-muted hover:text-studio-text">
+            Texto
+          </button>
+          <button data-tab="media" class="tab-btn py-2 text-[11px] font-medium rounded-lg transition-colors text-studio-muted hover:text-studio-text flex items-center justify-center gap-1">
+            <span>Mídia</span>
+            <span id="mediaActiveDot" class="hidden w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          </button>
+          <button data-tab="tailwind" class="tab-btn py-2 text-[11px] font-medium rounded-lg transition-colors text-studio-muted hover:text-studio-text">
+            Tailwind
+          </button>
+        </nav>
+        <button id="btnCollapseSidebar" type="button" title="Recolher parâmetros para focar na imagem"
+          class="p-2 rounded-lg text-studio-muted hover:text-studio-text hover:bg-studio-elevated transition-colors shrink-0">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Conteúdo das Abas -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+        <!-- ===== ABA 1: FORMAS GEOMÉTRICAS ===== -->
+        <section id="tab-shapes" class="tab-panel space-y-5">
+          <!-- Ativar / Desativar Formas -->
+          <label for="shapesEnabledToggle" class="p-3 rounded-xl bg-studio-bg border border-studio-border hover:border-zinc-600 flex items-center justify-between gap-2 cursor-pointer select-none transition-colors">
+            <div class="flex items-center gap-2.5">
+              <span class="relative inline-flex items-center shrink-0">
+                <input id="shapesEnabledToggle" type="checkbox" checked class="sr-only peer" />
+                <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+              </span>
+              <span class="text-xs font-medium text-studio-text">Exibir Formas</span>
+            </div>
+            <span id="shapesEnabledBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">ON</span>
+          </label>
+
+          <!-- Botão Principal: Randomizar Posição -->
+          <div class="space-y-2">
+            <button id="btnRandomShapePos" type="button"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-studio-elevated hover:bg-studio-hover border border-studio-border text-studio-text text-xs font-semibold transition-colors flex items-center justify-between group">
+              <div class="text-left">
+                <div>Randomizar Posição</div>
+                <div id="shapePosHint" class="text-[10px] font-normal text-studio-muted mt-0.5">Distribui formas pelo canvas</div>
+              </div>
+              <svg class="w-4 h-4 text-studio-muted group-hover:text-studio-text transition-transform group-active:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Controle de Quantidade de Formas (1 a 24) -->
+          <div class="space-y-2.5 p-3 rounded-xl bg-studio-bg border border-studio-border">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-studio-muted">Quantidade de Formas</span>
+              <div class="flex items-center gap-1.5">
+                <button id="btnShapeCountDec" type="button" aria-label="Diminuir formas"
+                  class="w-6 h-6 rounded-md bg-studio-panel hover:bg-studio-elevated border border-studio-border text-studio-text text-xs font-bold flex items-center justify-center transition-colors">−</button>
+                <span id="shapeCountVal" class="w-6 text-center font-mono text-xs font-semibold text-studio-text">15</span>
+                <button id="btnShapeCountInc" type="button" aria-label="Aumentar formas"
+                  class="w-6 h-6 rounded-md bg-studio-panel hover:bg-studio-elevated border border-studio-border text-studio-text text-xs font-bold flex items-center justify-center transition-colors">+</button>
+              </div>
+            </div>
+            <input id="shapeCountRange" type="range" min="1" max="24" value="15" />
+          </div>
+
+          <!-- Seletor de Estilo de Forma -->
+          <div class="space-y-2">
+            <span class="block text-xs font-medium text-studio-muted uppercase tracking-wider">Estilo Geométrico</span>
+            <div class="grid grid-cols-2 gap-1.5" id="shapeSelector">
+              <button data-shape="bauhaus" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-elevated border-zinc-500 text-studio-text">Bauhaus (Misto)</button>
+              <button data-shape="circle" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Círculos</button>
+              <button data-shape="square" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Quadrados</button>
+              <button data-shape="triangle" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Triângulos</button>
+              <button data-shape="lines" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Linhas / Arcos</button>
+              <button data-shape="card" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Card Editorial</button>
+              <button data-shape="grid" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Grade</button>
+              <button data-shape="none" class="shape-btn px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text">Nenhuma</button>
+            </div>
+          </div>
+
+          <!-- Escala das Formas -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-studio-muted">Escala das Formas</span>
+              <span id="shapeScaleVal" class="font-mono text-studio-text">50%</span>
+            </div>
+            <input id="shapeScaleRange" type="range" min="10" max="150" value="50" />
+          </div>
+
+          <!-- Aviso de modo inteligente quando mídia está ativa -->
+          <div id="mediaSafeZoneBadge" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-[11px] text-emerald-300 leading-relaxed">
+            <strong>Zona livre ativa:</strong> As formas estão posicionadas automaticamente ao redor da sua mídia sem sobreposição.
+          </div>
+        </section>
+
+        <!-- ===== ABA 2: TIPOGRAFIA (CONTROLE INDIVIDUAL + GOOGLE FONTS) ===== -->
+        <section id="tab-typography" class="tab-panel hidden space-y-4">
+          <!-- Ativar / Desativar Tipografia (Geral + Atalhos Individuais) -->
+          <div class="p-3 rounded-xl bg-studio-bg border border-studio-border space-y-2.5">
+            <label for="typographyEnabledToggle" class="flex items-center justify-between gap-2 cursor-pointer select-none">
+              <div class="flex items-center gap-2.5">
+                <span class="relative inline-flex items-center shrink-0">
+                  <input id="typographyEnabledToggle" type="checkbox" checked class="sr-only peer" />
+                  <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+                </span>
+                <span class="text-xs font-medium text-studio-text">Exibir Tipografia</span>
+              </div>
+              <span id="typographyEnabledBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">ON</span>
+            </label>
+
+            <!-- Botões rápidos de ativar/desativar cada texto individualmente -->
+            <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-studio-border">
+              <button data-quicktext="title" type="button" class="quick-text-toggle px-2 py-1 rounded-md text-[11px] font-medium border transition-colors bg-studio-elevated border-zinc-600 text-studio-text">
+                Título
+              </button>
+              <button data-quicktext="subtitle" type="button" class="quick-text-toggle px-2 py-1 rounded-md text-[11px] font-medium border transition-colors bg-studio-elevated border-zinc-600 text-studio-text">
+                Subtítulo
+              </button>
+              <button data-quicktext="tag" type="button" class="quick-text-toggle px-2 py-1 rounded-md text-[11px] font-medium border transition-colors bg-studio-elevated border-zinc-600 text-studio-text">
+                Selo
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-abas de Elementos de Texto -->
+          <div class="grid grid-cols-3 bg-studio-bg border border-studio-border rounded-xl p-1 gap-1" role="tablist" aria-label="Elemento de texto">
+            <button data-texttab="title" type="button" class="texttab-btn py-1.5 text-xs font-medium rounded-lg transition-colors bg-studio-elevated text-studio-text">
+              Título
+            </button>
+            <button data-texttab="subtitle" type="button" class="texttab-btn py-1.5 text-xs font-medium rounded-lg transition-colors text-studio-muted hover:text-studio-text">
+              Subtítulo
+            </button>
+            <button data-texttab="tag" type="button" class="texttab-btn py-1.5 text-xs font-medium rounded-lg transition-colors text-studio-muted hover:text-studio-text">
+              Selo / Tag
+            </button>
+          </div>
+
+          <!-- Visibilidade + Resetar Posição -->
+          <div class="p-3 rounded-xl bg-studio-bg border border-studio-border flex items-center justify-between gap-2">
+            <label for="textVisibleToggle" class="flex items-center gap-2.5 cursor-pointer select-none flex-1">
+              <span class="relative inline-flex items-center shrink-0">
+                <input id="textVisibleToggle" type="checkbox" checked class="sr-only peer" />
+                <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+              </span>
+              <span id="textVisibleLabel" class="text-xs font-medium text-studio-text">Exibir Título</span>
+            </label>
+            <button id="btnResetTextPos" type="button" title="Centralizar e resetar posição deste texto"
+              class="px-2 py-1 rounded-md bg-studio-panel hover:bg-studio-elevated border border-studio-border text-[11px] text-studio-muted hover:text-studio-text transition-colors">
+              Centralizar
+            </button>
+          </div>
+
+          <!-- Conteúdo do Texto Selecionado -->
+          <div class="space-y-1.5">
+            <label for="activeTextInput" class="block text-[11px] font-medium text-studio-muted uppercase tracking-wider">Conteúdo</label>
+            <textarea id="activeTextInput" rows="2" maxlength="140"
+              class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-sm text-studio-text focus:outline-none focus:border-zinc-500 resize-none">CONTRAST PALETE</textarea>
+          </div>
+
+          <!-- Seletor de Fonte (Google Fonts) + Carregar Fonte Personalizada -->
+          <div class="space-y-2.5 p-3 rounded-xl bg-studio-bg border border-studio-border">
+            <div class="space-y-1.5">
+              <label for="activeTextFont" class="block text-[11px] font-medium text-studio-muted uppercase tracking-wider">Fonte (Google Fonts)</label>
+              <select id="activeTextFont"
+                class="w-full bg-studio-panel border border-studio-border rounded-lg px-2.5 py-2 text-xs text-studio-text focus:outline-none focus:border-zinc-500 cursor-pointer">
+                <!-- Populado via JS -->
+              </select>
+            </div>
+
+            <div class="space-y-1.5 pt-2 border-t border-studio-border">
+              <label for="customGoogleFontInput" class="block text-[11px] text-studio-muted">Carregar fonte do Google Fonts</label>
+              <div class="flex gap-1.5">
+                <input id="customGoogleFontInput" type="text" placeholder="Ex: Bricolage Grotesque"
+                  class="flex-1 min-w-0 bg-studio-panel border border-studio-border rounded-lg px-2.5 py-1.5 text-xs text-studio-text placeholder:text-studio-subtle focus:outline-none focus:border-zinc-500" />
+                <button id="btnLoadGoogleFont" type="button"
+                  class="px-3 py-1.5 rounded-lg bg-studio-elevated hover:bg-studio-hover border border-studio-border text-xs font-medium text-studio-text transition-colors shrink-0">
+                  Carregar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tamanho da Fonte (Slider) -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-studio-muted">Tamanho da Fonte</span>
+              <span id="activeTextSizeVal" class="font-mono text-studio-text">68 px</span>
+            </div>
+            <input id="activeTextSizeRange" type="range" min="12" max="160" value="68" />
+          </div>
+
+          <!-- Alinhamento + Cor da Paleta -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <span class="block text-[11px] text-studio-muted">Alinhamento</span>
+              <div class="grid grid-cols-3 bg-studio-bg border border-studio-border rounded-lg p-0.5">
+                <button data-align="left" type="button" class="align-btn py-1.5 text-xs rounded-md text-studio-muted hover:text-studio-text flex justify-center" title="Esquerda">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
+                </button>
+                <button data-align="center" type="button" class="align-btn py-1.5 text-xs rounded-md bg-studio-elevated text-studio-text flex justify-center" title="Centro">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M7 12h10M5 18h14"/></svg>
+                </button>
+                <button data-align="right" type="button" class="align-btn py-1.5 text-xs rounded-md text-studio-muted hover:text-studio-text flex justify-center" title="Direita">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M10 12h10M6 18h14"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="activeTextColorRole" class="block text-[11px] text-studio-muted">Cor na Paleta</label>
+              <select id="activeTextColorRole"
+                class="w-full bg-studio-bg border border-studio-border rounded-lg px-2 py-1.5 text-xs text-studio-text focus:outline-none focus:border-zinc-500 cursor-pointer">
+                <option value="text">Automático (Texto)</option>
+                <option value="primary">Primária</option>
+                <option value="accent">Destaque</option>
+                <option value="surface">Superfície</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Posição Individual X e Y -->
+          <div class="space-y-3 p-3 rounded-xl bg-studio-bg border border-studio-border">
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-studio-muted">Posição X</span>
+                <span id="activeTextPosXVal" class="font-mono text-studio-text">50%</span>
+              </div>
+              <input id="activeTextPosXRange" type="range" min="0" max="100" step="0.5" value="50" />
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-studio-muted">Posição Y</span>
+                <span id="activeTextPosYVal" class="font-mono text-studio-text">50%</span>
+              </div>
+              <input id="activeTextPosYRange" type="range" min="0" max="100" step="0.5" value="50" />
+            </div>
+
+            <p class="text-[10px] text-studio-subtle leading-relaxed pt-1 border-t border-studio-border">
+              Dica: você também pode clicar e arrastar cada texto diretamente no canvas.
+            </p>
+          </div>
+        </section>
+
+        <!-- ===== ABA 3: MÍDIA (PNG, JPG, WEBP, MP4, MOV) ===== -->
+        <section id="tab-media" class="tab-panel hidden space-y-5">
+          <!-- Ativar / Desativar Mídia -->
+          <label for="mediaEnabledToggle" class="p-3 rounded-xl bg-studio-bg border border-studio-border hover:border-zinc-600 flex items-center justify-between gap-2 cursor-pointer select-none transition-colors">
+            <div class="flex items-center gap-2.5">
+              <span class="relative inline-flex items-center shrink-0">
+                <input id="mediaEnabledToggle" type="checkbox" checked class="sr-only peer" />
+                <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+              </span>
+              <span class="text-xs font-medium text-studio-text">Exibir Mídia</span>
+            </div>
+            <span id="mediaEnabledBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">ON</span>
+          </label>
+
+          <!-- Área de Upload -->
+          <div id="mediaDropzone"
+            class="border border-dashed border-studio-border hover:border-zinc-500 rounded-xl p-5 text-center bg-studio-bg transition-colors cursor-pointer">
+            <input id="mediaFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,.mp4,.mov,image/png,image/jpeg,image/webp,video/mp4,video/quicktime" class="hidden" />
+            <svg class="w-7 h-7 mx-auto text-studio-muted mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <div class="text-xs font-medium text-studio-text">Arraste ou clique para enviar</div>
+            <div class="text-[11px] text-studio-subtle mt-1">PNG (transparência), JPG, WebP, MP4 ou MOV</div>
+          </div>
+
+          <!-- Status da Mídia Carregada -->
+          <div id="mediaInfoCard" class="hidden p-3 rounded-xl bg-studio-bg border border-studio-border space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div id="mediaFileName" class="text-xs font-medium text-studio-text truncate">arquivo.png</div>
+                <div id="mediaFileMeta" class="text-[11px] text-studio-subtle">Imagem • 1080×1080</div>
+              </div>
+              <button id="btnRemoveMedia" type="button" title="Remover mídia"
+                class="p-1.5 rounded-lg text-studio-muted hover:text-red-400 hover:bg-studio-elevated transition-colors shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Controles de Vídeo -->
+            <div id="videoControls" class="hidden flex items-center gap-2 pt-2 border-t border-studio-border">
+              <button id="btnVideoPlayPause" type="button"
+                class="flex-1 py-1.5 px-3 rounded-lg bg-studio-elevated hover:bg-studio-hover text-xs font-medium text-studio-text flex items-center justify-center gap-1.5 transition-colors">
+                <span id="videoPlayIcon">⏸</span>
+                <span id="videoPlayLabel">Pausar Vídeo</span>
+              </button>
+              <span class="text-[10px] font-mono text-studio-subtle px-2 py-1 rounded bg-studio-panel border border-studio-border">LOOP</span>
+            </div>
+          </div>
+
+          <!-- Seletor de cor da Silhueta -->
+          <div id="silhouetteColorWrap" class="space-y-1.5">
+            <span class="block text-[11px] text-studio-muted">Cor da Silhueta</span>
+            <div class="grid grid-cols-3 bg-studio-bg border border-studio-border rounded-lg p-0.5">
+              <button data-sil="primary" class="sil-btn py-1.5 text-xs rounded-md bg-studio-elevated text-studio-text font-medium">Primária</button>
+              <button data-sil="accent" class="sil-btn py-1.5 text-xs rounded-md text-studio-muted hover:text-studio-text">Destaque</button>
+              <button data-sil="text" class="sil-btn py-1.5 text-xs rounded-md text-studio-muted hover:text-studio-text">Texto</button>
+            </div>
+          </div>
+
+          <!-- Sliders de Mídia -->
+          <div class="space-y-4 pt-1">
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-studio-muted">Intensidade do Recolorimento</span>
+                <span id="mediaIntensityVal" class="font-mono text-studio-text">100%</span>
+              </div>
+              <input id="mediaIntensityRange" type="range" min="0" max="100" value="100" />
+            </div>
+
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-studio-muted">Escala da Mídia</span>
+                <span id="mediaScaleVal" class="font-mono text-studio-text">68%</span>
+              </div>
+              <input id="mediaScaleRange" type="range" min="25" max="115" value="68" />
+            </div>
+          </div>
+
+          <!-- Modos de Recolorimento -->
+          <div class="space-y-2">
+            <span class="block text-xs font-medium text-studio-muted uppercase tracking-wider">Recolorimento da Mídia</span>
+            <div class="space-y-1.5" id="mediaModeSelector">
+              <button data-mode="silhouette" class="mediamode-btn w-full p-2.5 rounded-lg border text-left transition-colors bg-studio-elevated border-zinc-500">
+                <div class="text-xs font-medium text-studio-text">Silhueta / Logo (PNG Alfa)</div>
+                <div class="text-[11px] text-studio-muted mt-0.5">Preenche áreas opacas preservando transparência</div>
+              </button>
+              <button data-mode="tritone" class="mediamode-btn w-full p-2.5 rounded-lg border text-left transition-colors bg-studio-bg border-studio-border hover:border-zinc-600">
+                <div class="text-xs font-medium text-studio-text">Tritone (Sombra • Primária • Luz)</div>
+                <div class="text-[11px] text-studio-muted mt-0.5">Mapa de gradiente rico com 3 tons da paleta</div>
+              </button>
+              <button data-mode="duotone" class="mediamode-btn w-full p-2.5 rounded-lg border text-left transition-colors bg-studio-bg border-studio-border hover:border-zinc-600">
+                <div class="text-xs font-medium text-studio-text">Duotone (Contraste Editorial)</div>
+                <div class="text-[11px] text-studio-muted mt-0.5">Mapeia sombras e luzes em 2 cores principais</div>
+              </button>
+              <button data-mode="posterize" class="mediamode-btn w-full p-2.5 rounded-lg border text-left transition-colors bg-studio-bg border-studio-border hover:border-zinc-600">
+                <div class="text-xs font-medium text-studio-text">Posterize (Cores Exatas 3D LUT)</div>
+                <div class="text-[11px] text-studio-muted mt-0.5">Quantiza pixels para as 5 cores exatas da paleta</div>
+              </button>
+              <button data-mode="original" class="mediamode-btn w-full p-2.5 rounded-lg border text-left transition-colors bg-studio-bg border-studio-border hover:border-zinc-600">
+                <div class="text-xs font-medium text-studio-text">Original (Sem Recolorimento)</div>
+                <div class="text-[11px] text-studio-muted mt-0.5">Mantém cores nativas da imagem/vídeo</div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ABA 4: TAILWIND CSS COLOR GENERATOR ===== -->
+        <section id="tab-tailwind" class="tab-panel hidden space-y-4">
+          <!-- Nova Seção: Base (Um ou mais HEX personalizados) -->
+          <div class="space-y-2">
+            <span class="block text-xs font-medium text-studio-muted uppercase tracking-wider">Base</span>
+            <div class="p-3 rounded-xl bg-studio-bg border border-studio-border space-y-2.5">
+              <div class="flex items-center gap-1.5">
+                <div id="twBasePickerWrap" class="relative w-8 h-8 rounded-lg border border-white/15 shrink-0 overflow-hidden shadow-inner" style="background-color: #5B6CFF;">
+                  <input id="twBaseColorPicker" type="color" value="#5B6CFF" class="color-input-hidden" title="Escolher cor base" />
+                </div>
+                <input id="twBaseHexInput" type="text" placeholder="#5B6CFF ou #5B6CFF, #FF6B4A"
+                  class="flex-1 min-w-0 bg-studio-panel border border-studio-border rounded-lg px-2.5 py-1.5 font-mono text-xs text-studio-text placeholder:text-studio-subtle focus:outline-none focus:border-zinc-500" />
+                <button id="btnAddTwBaseHex" type="button" title="Adicionar HEX(s) na Base"
+                  class="px-2.5 py-1.5 rounded-lg bg-studio-elevated hover:bg-studio-hover border border-studio-border text-xs font-semibold text-studio-text transition-colors shrink-0">
+                  +
+                </button>
+              </div>
+              <p class="text-[10px] text-studio-subtle leading-relaxed">
+                Insira um ou mais códigos HEX separados por vírgula ou espaço.
+              </p>
+              <div id="twCustomHexList" class="hidden flex flex-wrap gap-1.5 pt-2 border-t border-studio-border">
+                <!-- Chips de HEX personalizados renderizados via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Nome do Token + Preservar Cor Exata -->
+          <div class="p-3 rounded-xl bg-studio-bg border border-studio-border space-y-3">
+            <div class="space-y-1.5">
+              <label for="twTokenNameInput" class="block text-[11px] font-medium text-studio-muted">Nome da Cor no Tailwind</label>
+              <input id="twTokenNameInput" type="text" value="brand" maxlength="24" placeholder="ex: brand, primary, ocean"
+                class="w-full bg-studio-panel border border-studio-border rounded-lg px-2.5 py-1.5 font-mono text-xs text-studio-text focus:outline-none focus:border-zinc-500" />
+            </div>
+
+            <label for="twLockExactToggle" class="flex items-center justify-between gap-2 cursor-pointer select-none pt-2 border-t border-studio-border">
+              <div>
+                <div class="text-xs font-medium text-studio-text">Preservar HEX exato</div>
+                <div class="text-[10px] text-studio-subtle">Fixa a cor original no degrau mais próximo</div>
+              </div>
+              <span class="relative inline-flex items-center shrink-0">
+                <input id="twLockExactToggle" type="checkbox" checked class="sr-only peer" />
+                <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Lista da Escala 50 - 950 -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-medium text-studio-muted uppercase tracking-wider">Escala Gerada</span>
+              <span class="text-[10px] text-studio-subtle">Clique para copiar HEX</span>
+            </div>
+            <div id="twScaleList" class="space-y-1">
+              <!-- Renderizado dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Botão Aplicar na Paleta -->
+          <button id="btnApplyTwToPalette" type="button"
+            class="w-full py-2.5 px-3.5 rounded-xl bg-studio-text hover:bg-white text-studio-bg text-xs font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Aplicar na Paleta</span>
+          </button>
+
+          <!-- Seletor de Cor da Paleta Atual (Movido para baixo da Escala Gerada) -->
+          <div class="space-y-2 pt-1">
+            <span class="block text-xs font-medium text-studio-muted uppercase tracking-wider">PALETA ATUAL</span>
+            <div class="grid grid-cols-5 gap-1" id="twRoleSelector">
+              <button data-twrole="bg" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Fundo</button>
+              <button data-twrole="surface" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Superf.</button>
+              <button data-twrole="primary" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-elevated border-zinc-500 text-studio-text truncate">Primária</button>
+              <button data-twrole="accent" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Destaque</button>
+              <button data-twrole="text" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Texto</button>
+            </div>
+          </div>
+
+          <!-- Formato, Escopo e Preview do Código (Oculto na barra lateral) -->
+          <div class="hidden p-3 rounded-xl bg-studio-bg border border-studio-border space-y-2.5">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="space-y-1">
+                <label for="twFormatSelect" class="block text-[10px] text-studio-muted uppercase">Formato</label>
+                <select id="twFormatSelect"
+                  class="w-full bg-studio-panel border border-studio-border rounded-lg px-2 py-1.5 text-xs text-studio-text focus:outline-none cursor-pointer">
+                  <option value="v4" selected>Tailwind v4 (@theme)</option>
+                  <option value="v3">Tailwind v3 (config)</option>
+                  <option value="css">CSS Variables</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label for="twScopeSelect" class="block text-[10px] text-studio-muted uppercase">Escopo</label>
+                <select id="twScopeSelect"
+                  class="w-full bg-studio-panel border border-studio-border rounded-lg px-2 py-1.5 text-xs text-studio-text focus:outline-none cursor-pointer">
+                  <option value="single" selected>Cor selecionada</option>
+                  <option value="all">Paleta completa</option>
+                </select>
+              </div>
+            </div>
+
+            <pre id="twCodePreview" class="max-h-40 overflow-auto p-2.5 rounded-lg bg-studio-panel border border-studio-border font-mono text-[10px] leading-relaxed text-studio-muted select-all"></pre>
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <button id="btnCopyTwCode" type="button"
+                class="py-2 px-3 rounded-lg bg-studio-text hover:bg-white text-studio-bg text-xs font-semibold transition-colors">
+                Copiar Código
+              </button>
+              <button id="btnDownloadTwCode" type="button"
+                class="py-2 px-3 rounded-lg bg-studio-elevated hover:bg-studio-hover border border-studio-border text-studio-text text-xs font-medium transition-colors">
+                Baixar Arquivo
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- ==================== 3. PALCO CENTRAL (AMPLO E LIMPO) ==================== -->
+    <main id="stageContainer" class="flex-1 stage-bg p-4 sm:p-6 lg:p-8 flex items-center justify-center min-w-0 min-h-[380px] overflow-hidden relative">
+      <!-- Botão para reabrir a coluna de parâmetros quando recolhida -->
+      <button id="btnExpandSidebar" type="button" title="Mostrar painel de parâmetros"
+        class="hidden absolute top-4 left-4 z-10 px-3 py-2 rounded-xl bg-studio-panel/90 hover:bg-studio-elevated border border-studio-border text-xs font-medium text-studio-text shadow-lg backdrop-blur-sm flex items-center gap-2 transition-colors">
+        <svg class="w-4 h-4 text-studio-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+        <span>Parâmetros</span>
+      </button>
+
+      <canvas id="mainCanvas" class="rounded-xl shadow-2xl border border-studio-border/80 block"></canvas>
+
+      <!-- Indicador discreto de dimensão ativa no canto inferior direito -->
+      <div id="stageRatioTag" class="absolute bottom-3 right-4 px-2.5 py-1 rounded-md bg-studio-panel/85 border border-studio-border text-[11px] font-mono text-studio-muted backdrop-blur-sm pointer-events-none">
+        20:7 • 2000×700
+      </div>
+
+      <!-- Badge de gravação ativa -->
+      <div id="recordingPill" class="hidden absolute top-4 right-4 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs font-medium flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        <span>Gravando vídeo...</span>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODAL DE EXPORTAÇÃO ==================== -->
+  <div id="exportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-md bg-studio-panel border border-studio-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-studio-border flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-studio-text">Exportar Composição</h2>
+        <button id="btnCloseExport" type="button" class="p-1.5 rounded-lg text-studio-muted hover:text-studio-text hover:bg-studio-elevated transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <!-- Abas Foto / Vídeo / Tailwind -->
+      <div class="p-2 border-b border-studio-border grid grid-cols-3 gap-1 bg-studio-bg/50">
+        <button data-exporttab="photo" class="export-tab-btn py-2 text-xs font-medium rounded-lg bg-studio-elevated text-studio-text transition-colors">
+          Foto (PNG)
+        </button>
+        <button data-exporttab="video" class="export-tab-btn py-2 text-xs font-medium rounded-lg text-studio-muted hover:text-studio-text transition-colors">
+          Vídeo (MP4)
+        </button>
+        <button data-exporttab="tailwind" class="export-tab-btn py-2 text-xs font-medium rounded-lg text-studio-muted hover:text-studio-text transition-colors">
+          Tailwind CSS
+        </button>
+      </div>
+
+      <div class="p-5">
+        <!-- Aba Foto -->
+        <div id="export-panel-photo" class="space-y-4">
+          <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-medium text-studio-text">Incluir barra da paleta com HEX</div>
+              <div class="text-[11px] text-studio-muted mt-0.5">Adiciona legenda limpa na base da imagem</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input id="exportPhotoIncludeBar" type="checkbox" checked class="sr-only peer" />
+              <div class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+          </div>
+
+          <div class="text-xs text-studio-muted flex justify-between px-1">
+            <span>Resolução de saída</span>
+            <span id="exportResolutionLabel" class="font-mono text-studio-text">2000 × 700 px</span>
+          </div>
+
+          <button id="btnDownloadPng" type="button"
+            class="w-full py-2.5 px-4 rounded-xl bg-studio-text hover:bg-white text-studio-bg text-sm font-semibold transition-colors">
+            Baixar Imagem PNG
+          </button>
+        </div>
+
+        <!-- Aba Vídeo -->
+        <div id="export-panel-video" class="hidden space-y-4">
+          <p id="exportVideoHint" class="text-xs text-studio-muted leading-relaxed">
+            Sem vídeo enviado: será gerada uma animação suave de showcase com as formas e cores da paleta.
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <label for="exportDuration" class="block text-[11px] text-studio-muted">Duração</label>
+              <select id="exportDuration" class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-xs text-studio-text focus:outline-none">
+                <option value="1">1 segundo</option>
+                <option value="2">2 segundos</option>
+                <option value="3" selected>3 segundos</option>
+                <option value="5">5 segundos</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="exportFps" class="block text-[11px] text-studio-muted">Taxa de Quadros</label>
+              <select id="exportFps" class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-xs text-studio-text focus:outline-none">
+                <option value="8">8 fps (estilizado)</option>
+                <option value="12">12 fps (leve)</option>
+                <option value="24" selected>24 fps (cinema)</option>
+                <option value="30">30 fps (fluido)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-studio-bg border border-studio-border flex items-center justify-between gap-3">
+            <span class="text-xs text-studio-text">Incluir barra de cores HEX no vídeo</span>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input id="exportVideoIncludeBar" type="checkbox" checked class="sr-only peer" />
+              <div class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+          </div>
+
+          <div id="videoProgressWrap" class="hidden space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-studio-muted">Renderizando vídeo...</span>
+              <span id="videoProgressPct" class="font-mono text-studio-text">0%</span>
+            </div>
+            <div class="w-full h-1.5 bg-studio-bg rounded-full overflow-hidden border border-studio-border">
+              <div id="videoProgressBar" class="h-full bg-studio-text transition-all duration-100" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <button id="btnRecordVideo" type="button"
+            class="w-full py-2.5 px-4 rounded-xl bg-studio-text hover:bg-white text-studio-bg text-sm font-semibold transition-colors disabled:opacity-40 disabled:pointer-events-none">
+            Gravar e Baixar Vídeo
+          </button>
+        </div>
+
+        <!-- Aba Tailwind CSS -->
+        <div id="export-panel-tailwind" class="hidden space-y-4">
+          <p class="text-xs text-studio-muted leading-relaxed">
+            Exporte as escalas 50–950 e os tokens da sua paleta prontos para colar no seu projeto Tailwind CSS.
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <label for="exportTwFormat" class="block text-[11px] text-studio-muted">Formato</label>
+              <select id="exportTwFormat" class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-xs text-studio-text focus:outline-none">
+                <option value="v4" selected>Tailwind v4 (@theme)</option>
+                <option value="v3">Tailwind v3 (config)</option>
+                <option value="css">CSS Variables (:root)</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="exportTwScope" class="block text-[11px] text-studio-muted">Escopo</label>
+              <select id="exportTwScope" class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-xs text-studio-text focus:outline-none">
+                <option value="all" selected>Paleta completa</option>
+                <option value="single">Apenas cor ativa</option>
+              </select>
+            </div>
+          </div>
+
+          <pre id="exportTwCodePreview" class="max-h-48 overflow-auto p-3 rounded-xl bg-studio-bg border border-studio-border font-mono text-[11px] leading-relaxed text-studio-muted select-all"></pre>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnExportCopyTw" type="button"
+              class="py-2.5 px-4 rounded-xl bg-studio-text hover:bg-white text-studio-bg text-xs font-semibold transition-colors">
+              Copiar Código
+            </button>
+            <button id="btnExportDownloadTw" type="button"
+              class="py-2.5 px-4 rounded-xl bg-studio-elevated hover:bg-studio-hover border border-studio-border text-studio-text text-xs font-semibold transition-colors">
+              Baixar Arquivo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Discreto -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-studio-elevated border border-studio-border text-xs font-medium text-studio-text shadow-xl">
+    Mensagem
+  </div>
+
+  <!-- ==================== SCRIPT PRINCIPAL ==================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      /* =====================================================================
+       * 1. MOTOR DE CORES E WCAG 2.1 (JS PURO)
+       * ===================================================================== */
+      const ColorEngine = {
+        clamp(val, min, max) {
+          return Math.min(max, Math.max(min, val));
+        },
+
+        normalizeHex(hex) {
+          if (!hex) return null;
+          let h = hex.trim().replace(/^#/, '');
+          if (h.length === 3) {
+            h = h.split('').map(c => c + c).join('');
+          }
+          if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+          return '#' + h.toUpperCase();
+        },
+
+        hexToRgb(hex) {
+          const clean = (this.normalizeHex(hex) || '#000000').slice(1);
+          const num = parseInt(clean, 16);
+          return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+          };
+        },
+
+        rgbToHex(r, g, b) {
+          const toHex = n => this.clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
+          return ('#' + toHex(r) + toHex(g) + toHex(b)).toUpperCase();
+        },
+
+        rgbToHsl(r, g, b) {
+          r /= 255; g /= 255; b /= 255;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          let h = 0, s = 0;
+          const l = (max + min) / 2;
+          if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+              case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+              case g: h = (b - r) / d + 2; break;
+              case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+          }
+          return {
+            h: Math.round(h * 360) % 360,
+            s: Math.round(s * 100),
+            l: Math.round(l * 100)
+          };
+        },
+
+        hslToRgb(h, s, l) {
+          h = ((h % 360) + 360) % 360;
+          s = this.clamp(s, 0, 100) / 100;
+          l = this.clamp(l, 0, 100) / 100;
+          const c = (1 - Math.abs(2 * l - 1)) * s;
+          const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+          const m = l - c / 2;
+          let r = 0, g = 0, b = 0;
+          if (h < 60) { r = c; g = x; b = 0; }
+          else if (h < 120) { r = x; g = c; b = 0; }
+          else if (h < 180) { r = 0; g = c; b = x; }
+          else if (h < 240) { r = 0; g = x; b = c; }
+          else if (h < 300) { r = x; g = 0; b = c; }
+          else { r = c; g = 0; b = x; }
+          return {
+            r: Math.round((r + m) * 255),
+            g: Math.round((g + m) * 255),
+            b: Math.round((b + m) * 255)
+          };
+        },
+
+        hexToHsl(hex) {
+          const { r, g, b } = this.hexToRgb(hex);
+          return this.rgbToHsl(r, g, b);
+        },
+
+        hslToHex(h, s, l) {
+          const { r, g, b } = this.hslToRgb(h, s, l);
+          return this.rgbToHex(r, g, b);
+        },
+
+        getRelativeLuminance(hex) {
+          const { r, g, b } = this.hexToRgb(hex);
+          const [rs, gs, bs] = [r, g, b].map(v => {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+          });
+          return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        },
+
+        getContrastRatio(hex1, hex2) {
+          const l1 = this.getRelativeLuminance(hex1);
+          const l2 = this.getRelativeLuminance(hex2);
+          const lighter = Math.max(l1, l2);
+          const darker = Math.min(l1, l2);
+          return (lighter + 0.05) / (darker + 0.05);
+        },
+
+        getWcagStatus(ratio) {
+          if (ratio >= 7) return { label: 'AAA', color: 'text-emerald-400', dot: 'bg-emerald-400' };
+          if (ratio >= 4.5) return { label: 'AA', color: 'text-emerald-300', dot: 'bg-emerald-400' };
+          if (ratio >= 3) return { label: 'AA+', color: 'text-amber-300', dot: 'bg-amber-400' };
+          return { label: 'Baixo', color: 'text-rose-400', dot: 'bg-rose-400' };
+        },
+
+        enforceContrast(bgHex, fgHex, minRatio = 4.5) {
+          if (this.getContrastRatio(bgHex, fgHex) >= minRatio) return fgHex;
+          const bgLum = this.getRelativeLuminance(bgHex);
+          const hsl = this.hexToHsl(fgHex);
+          const goLighter = bgLum < 0.35;
+          let bestHex = fgHex;
+          let bestRatio = this.getContrastRatio(bgHex, fgHex);
+
+          const step = goLighter ? 2 : -2;
+          for (let l = hsl.l; l >= 2 && l <= 98; l += step) {
+            const candidate = this.hslToHex(hsl.h, hsl.s, l);
+            const ratio = this.getContrastRatio(bgHex, candidate);
+            if (ratio > bestRatio) { bestRatio = ratio; bestHex = candidate; }
+            if (ratio >= minRatio) return candidate;
+          }
+          for (let l = hsl.l; l >= 2 && l <= 98; l -= step) {
+            const candidate = this.hslToHex(hsl.h, hsl.s, l);
+            const ratio = this.getContrastRatio(bgHex, candidate);
+            if (ratio > bestRatio) { bestRatio = ratio; bestHex = candidate; }
+            if (ratio >= minRatio) return candidate;
+          }
+          return goLighter ? this.hslToHex(hsl.h, 15, 96) : this.hslToHex(hsl.h, 15, 6);
+        }
+      };
+
+      /* =====================================================================
+       * 2. CONFIGURAÇÕES E ESTADO GLOBAL
+       * ===================================================================== */
+      const ROLES = [
+        { key: 'bg', label: 'Fundo' },
+        { key: 'surface', label: 'Superfície' },
+        { key: 'primary', label: 'Primária' },
+        { key: 'accent', label: 'Destaque' },
+        { key: 'text', label: 'Texto' }
+      ];
+
+      const HARMONIES = [
+        { key: 'monochromatic', label: 'Monocromático' },
+        { key: 'analogous', label: 'Análogo' },
+        { key: 'complementary', label: 'Complementar' },
+        { key: 'split-complementary', label: 'Complementar Dividida' },
+        { key: 'triadic', label: 'Tríade' },
+        { key: 'tetradic', label: 'Tétrade' },
+        { key: 'editorial', label: 'Editorial Alto Contraste' }
+      ];
+
+      // 6 Proporções Solicitadas
+      const RATIOS = {
+        '1:1':  { w: 1080, h: 1080 },
+        '4:5':  { w: 1080, h: 1350 },
+        '4:3':  { w: 1440, h: 1080 },
+        '16:9': { w: 1920, h: 1080 },
+        '9:16': { w: 1080, h: 1920 },
+        '20:7': { w: 2000, h: 700 }
+      };
+
+      // Lista curada de fontes populares do Google Fonts
+      const CURATED_GOOGLE_FONTS = [
+        'Inter',
+        'Space Grotesk',
+        'Syne',
+        'Playfair Display',
+        'JetBrains Mono',
+        'Bebas Neue',
+        'Montserrat',
+        'Oswald',
+        'DM Sans',
+        'Fraunces',
+        'Archivo Black',
+        'Poppins',
+        'Lora',
+        'Plus Jakarta Sans',
+        'Anton',
+        'Cormorant Garamond'
+      ];
+
+      // Rótulos e posições padrão otimizadas para 20:7
+      const DEFAULT_TEXTS = {
+        tag: {
+          label: 'Selo / Tag',
+          visible: true,
+          content: 'TAVARES COLOR STUDIO',
+          font: 'JetBrains Mono',
+          size: 16,
+          align: 'center',
+          x: 50,
+          y: 26,
+          colorRole: 'text'
+        },
+        title: {
+          label: 'Título',
+          visible: true,
+          content: 'CONTRAST PALETE',
+          font: 'Space Grotesk',
+          size: 72,
+          align: 'center',
+          x: 50,
+          y: 50,
+          colorRole: 'text'
+        },
+        subtitle: {
+          label: 'Subtítulo',
+          visible: true,
+          content: 'Teste de legibilidade em tempo real com harmonia cromática e precisão visual.',
+          font: 'Inter',
+          size: 22,
+          align: 'center',
+          x: 50,
+          y: 72,
+          colorRole: 'text'
+        }
+      };
+
+      const availableFonts = [...CURATED_GOOGLE_FONTS];
+      const loadedGoogleFonts = new Set(['Inter', 'Space Grotesk', 'Syne', 'Playfair Display', 'JetBrains Mono']);
+
+      const state = {
+        palette: {
+          bg: '#12131A',
+          surface: '#1F2230',
+          primary: '#5B6CFF',
+          accent: '#FF6B4A',
+          text: '#F4F5FA'
+        },
+        locks: {
+          bg: false,
+          surface: false,
+          primary: false,
+          accent: false,
+          text: false
+        },
+        harmony: 'triadic',
+        ensureWcag: true,
+        ratio: '20:7',
+
+        // Formas Geométricas Dinâmicas (Padrão: 15 formas, escala 50%)
+        shapesEnabled: true,
+        shape: 'bauhaus',
+        shapeCount: 15,
+        shapeScale: 50,
+        shapeItems: [],
+
+        // Tipografia Individualizada
+        typographyEnabled: true,
+        activeTextId: 'title',
+        tagTextMatchBg: false,
+        texts: {
+          tag: { ...DEFAULT_TEXTS.tag },
+          title: { ...DEFAULT_TEXTS.title },
+          subtitle: { ...DEFAULT_TEXTS.subtitle }
+        },
+
+        // Mídia
+        media: {
+          enabled: true,
+          type: null, // 'image' | 'video' | null
+          element: null,
+          fileName: '',
+          width: 0,
+          height: 0,
+          objectUrl: null,
+          mode: 'silhouette', // 'silhouette' | 'tritone' | 'duotone' | 'posterize' | 'original'
+          silhouetteRole: 'primary',
+          intensity: 100,
+          scale: 68,
+          isPlaying: true
+        },
+
+        // Histórico Undo/Redo
+        history: [],
+        historyIndex: -1,
+
+        // Estado de Gravação
+        isRecording: false,
+        recordAnimTime: 0,
+        recordIncludeBar: false,
+
+        // Gerador Tailwind CSS (Escalas 50 - 950)
+        tailwind: {
+          source: 'palette', // 'custom' | 'palette'
+          customHexes: [],
+          activeCustomIndex: 0,
+          role: 'primary',
+          tokenName: 'brand',
+          format: 'v4',
+          scope: 'single',
+          lockExact: true
+        }
+      };
+
+      /* =====================================================================
+       * 2.5 MOTOR TAILWIND CSS COLOR GENERATOR (ESCALA 50–950)
+       * ===================================================================== */
+      const TW_SHADES = [
+        { stop: 50,  l: 97, sMult: 0.90 },
+        { stop: 100, l: 93, sMult: 0.94 },
+        { stop: 200, l: 86, sMult: 0.96 },
+        { stop: 300, l: 75, sMult: 0.98 },
+        { stop: 400, l: 62, sMult: 1.00 },
+        { stop: 500, l: 50, sMult: 1.00 },
+        { stop: 600, l: 42, sMult: 0.98 },
+        { stop: 700, l: 34, sMult: 0.94 },
+        { stop: 800, l: 25, sMult: 0.88 },
+        { stop: 900, l: 17, sMult: 0.82 },
+        { stop: 950, l: 9,  sMult: 0.78 }
+      ];
+
+      function sanitizeTokenName(name, fallback = 'brand') {
+        const clean = (name || '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9-_]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return clean || fallback;
+      }
+
+      function parseHexList(rawText) {
+        if (!rawText) return [];
+        const tokens = rawText.split(/[\s,;]+/).filter(Boolean);
+        const result = [];
+        tokens.forEach(tok => {
+          const norm = ColorEngine.normalizeHex(tok);
+          if (norm && !result.includes(norm)) result.push(norm);
+        });
+        return result;
+      }
+
+      function getActiveTailwindBaseHex() {
+        if (state.tailwind.source === 'custom' && state.tailwind.customHexes.length > 0) {
+          const idx = ColorEngine.clamp(state.tailwind.activeCustomIndex, 0, state.tailwind.customHexes.length - 1);
+          return state.tailwind.customHexes[idx];
+        }
+        return state.palette[state.tailwind.role];
+      }
+
+      function applyTailwindToPalette() {
+        const baseHex = getActiveTailwindBaseHex();
+        const scale = generateTailwindScale(baseHex, state.tailwind.lockExact);
+        const isDark = ColorEngine.getRelativeLuminance(state.palette.bg) < 0.45;
+
+        // Se o usuário inseriu 2+ HEX personalizados na Base, usa o segundo HEX para compor o Destaque
+        let accentHex = isDark ? scale[3].hex : scale[7].hex;
+        if (state.tailwind.source === 'custom' && state.tailwind.customHexes.length > 1) {
+          const secondIdx = (state.tailwind.activeCustomIndex + 1) % state.tailwind.customHexes.length;
+          const secondScale = generateTailwindScale(state.tailwind.customHexes[secondIdx], state.tailwind.lockExact);
+          accentHex = isDark ? secondScale[4].hex : secondScale[6].hex;
+        }
+
+        const next = { ...state.palette };
+        if (!state.locks.bg) next.bg = isDark ? scale[10].hex : scale[0].hex;
+        if (!state.locks.surface) next.surface = isDark ? scale[9].hex : scale[1].hex;
+        if (!state.locks.primary) next.primary = isDark ? scale[5].hex : scale[6].hex;
+        if (!state.locks.accent) next.accent = accentHex;
+        if (!state.locks.text) next.text = isDark ? scale[0].hex : scale[10].hex;
+
+        state.tagTextMatchBg = false;
+        commitPalette(applyWcagRules(next), true);
+        showToast('Escala Tailwind aplicada na paleta!');
+      }
+
+      function generateTailwindScale(baseHex, lockExact = true) {
+        const hsl = ColorEngine.hexToHsl(baseHex);
+        let closestIdx = 0;
+        let minDiff = Infinity;
+
+        TW_SHADES.forEach((sh, idx) => {
+          const diff = Math.abs(sh.l - hsl.l);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIdx = idx;
+          }
+        });
+
+        return TW_SHADES.map((sh, idx) => {
+          if (lockExact && idx === closestIdx) {
+            return { stop: sh.stop, hex: ColorEngine.normalizeHex(baseHex) || baseHex, isBase: true };
+          }
+          const s = hsl.s <= 6
+            ? hsl.s
+            : ColorEngine.clamp(Math.round(hsl.s * sh.sMult), 6, 98);
+          const hex = ColorEngine.hslToHex(hsl.h, s, sh.l);
+          return { stop: sh.stop, hex, isBase: idx === closestIdx };
+        });
+      }
+
+      function buildTailwindSnippet(format, scope) {
+        const token = sanitizeTokenName(state.tailwind.tokenName, 'brand');
+        const lockExact = state.tailwind.lockExact;
+
+        if (scope === 'single') {
+          const scale = generateTailwindScale(getActiveTailwindBaseHex(), lockExact);
+          if (format === 'v4') {
+            const lines = scale.map(s => `  --color-${token}-${s.stop}: ${s.hex};`).join('\n');
+            return `@theme {\n${lines}\n}`;
+          }
+          if (format === 'v3') {
+            const lines = scale.map(s => `        ${s.stop}: '${s.hex}',`).join('\n');
+            return `// tailwind.config.js\nexport default {\n  theme: {\n    extend: {\n      colors: {\n        ${token}: {\n${lines}\n        },\n      },\n    },\n  },\n};`;
+          }
+          const lines = scale.map(s => `  --color-${token}-${s.stop}: ${s.hex};`).join('\n');
+          return `:root {\n${lines}\n}`;
+        }
+
+        // Escopo: Paleta Completa (Primária 50-950, Destaque 50-950 + tokens semânticos)
+        const primaryScale = generateTailwindScale(state.palette.primary, lockExact);
+        const accentScale = generateTailwindScale(state.palette.accent, lockExact);
+        const pal = state.palette;
+
+        if (format === 'v4') {
+          const pLines = primaryScale.map(s => `  --color-primary-${s.stop}: ${s.hex};`).join('\n');
+          const aLines = accentScale.map(s => `  --color-accent-${s.stop}: ${s.hex};`).join('\n');
+          return `@theme {\n  /* Tokens Semânticos */\n  --color-canvas-bg: ${pal.bg};\n  --color-canvas-surface: ${pal.surface};\n  --color-canvas-text: ${pal.text};\n\n  /* Escala Primária */\n${pLines}\n\n  /* Escala Destaque */\n${aLines}\n}`;
+        }
+
+        if (format === 'v3') {
+          const pLines = primaryScale.map(s => `          ${s.stop}: '${s.hex}',`).join('\n');
+          const aLines = accentScale.map(s => `          ${s.stop}: '${s.hex}',`).join('\n');
+          return `// tailwind.config.js\nexport default {\n  theme: {\n    extend: {\n      colors: {\n        canvas: {\n          bg: '${pal.bg}',\n          surface: '${pal.surface}',\n          text: '${pal.text}',\n        },\n        primary: {\n${pLines}\n        },\n        accent: {\n${aLines}\n        },\n      },\n    },\n  },\n};`;
+        }
+
+        const pLines = primaryScale.map(s => `  --color-primary-${s.stop}: ${s.hex};`).join('\n');
+        const aLines = accentScale.map(s => `  --color-accent-${s.stop}: ${s.hex};`).join('\n');
+        return `:root {\n  --color-canvas-bg: ${pal.bg};\n  --color-canvas-surface: ${pal.surface};\n  --color-canvas-text: ${pal.text};\n\n${pLines}\n\n${aLines}\n}`;
+      }
+
+      function downloadTailwindFile(format, scope) {
+        const code = buildTailwindSnippet(format, scope);
+        const isJs = format === 'v3';
+        const ext = isJs ? 'js' : 'css';
+        const mime = isJs ? 'application/javascript;charset=utf-8' : 'text/css;charset=utf-8';
+        const token = sanitizeTokenName(state.tailwind.tokenName, 'brand');
+        const fileName = scope === 'all'
+          ? `tavares-tailwind-palette.${ext}`
+          : `tavares-tailwind-${token}.${ext}`;
+
+        const blob = new Blob([code], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        showToast(`Arquivo ${fileName} baixado!`);
+      }
+
+      function renderTailwindPanel() {
+        const scaleList = document.getElementById('twScaleList');
+        if (!scaleList) return;
+
+        const baseHex = getActiveTailwindBaseHex();
+
+        // Sincroniza o picker de cor da Base
+        const pickerWrap = document.getElementById('twBasePickerWrap');
+        const pickerInput = document.getElementById('twBaseColorPicker');
+        if (pickerWrap) pickerWrap.style.backgroundColor = baseHex;
+        if (pickerInput) pickerInput.value = baseHex;
+
+        // Sincroniza destaque dos botões da seção PALETA ATUAL
+        document.querySelectorAll('.tw-role-btn').forEach(b => {
+          const active = state.tailwind.source === 'palette' && b.dataset.twrole === state.tailwind.role;
+          b.classList.toggle('bg-studio-elevated', active);
+          b.classList.toggle('border-zinc-500', active);
+          b.classList.toggle('text-studio-text', active);
+          b.classList.toggle('bg-studio-bg', !active);
+          b.classList.toggle('border-studio-border', !active);
+          b.classList.toggle('text-studio-muted', !active);
+        });
+
+        // Renderiza chips de HEX personalizados da seção Base
+        const customList = document.getElementById('twCustomHexList');
+        if (customList) {
+          customList.innerHTML = '';
+          customList.classList.toggle('hidden', state.tailwind.customHexes.length === 0);
+          state.tailwind.customHexes.forEach((hex, idx) => {
+            const isActive = state.tailwind.source === 'custom' && state.tailwind.activeCustomIndex === idx;
+            const chip = document.createElement('div');
+            chip.className = `inline-flex items-center gap-1.5 pl-1.5 pr-1 py-1 rounded-lg border text-[11px] font-mono transition-colors ${
+              isActive
+                ? 'bg-studio-elevated border-zinc-500 text-studio-text'
+                : 'bg-studio-panel border-studio-border text-studio-muted hover:text-studio-text'
+            }`;
+
+            const selectBtn = document.createElement('button');
+            selectBtn.type = 'button';
+            selectBtn.className = 'inline-flex items-center gap-1.5';
+            selectBtn.title = `Usar ${hex} como base da escala`;
+            selectBtn.innerHTML = `<span class="w-3.5 h-3.5 rounded border border-white/15 shrink-0" style="background-color: ${hex};"></span><span>${hex}</span>`;
+            selectBtn.addEventListener('click', () => {
+              state.tailwind.source = 'custom';
+              state.tailwind.activeCustomIndex = idx;
+              renderTailwindPanel();
+            });
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'p-0.5 rounded hover:bg-studio-hover text-studio-subtle hover:text-red-400 transition-colors';
+            removeBtn.title = `Remover ${hex}`;
+            removeBtn.innerHTML = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+            removeBtn.addEventListener('click', () => {
+              state.tailwind.customHexes.splice(idx, 1);
+              if (state.tailwind.customHexes.length === 0) {
+                state.tailwind.source = 'palette';
+                state.tailwind.activeCustomIndex = 0;
+              } else {
+                state.tailwind.activeCustomIndex = Math.min(state.tailwind.activeCustomIndex, state.tailwind.customHexes.length - 1);
+              }
+              renderTailwindPanel();
+            });
+
+            chip.appendChild(selectBtn);
+            chip.appendChild(removeBtn);
+            customList.appendChild(chip);
+          });
+        }
+
+        const scale = generateTailwindScale(baseHex, state.tailwind.lockExact);
+        scaleList.innerHTML = '';
+
+        scale.forEach(item => {
+          const lum = ColorEngine.getRelativeLuminance(item.hex);
+          const contrastWhite = ColorEngine.getContrastRatio(item.hex, '#FFFFFF');
+          const contrastBlack = ColorEngine.getContrastRatio(item.hex, '#000000');
+          const bestContrast = Math.max(contrastWhite, contrastBlack);
+          const textSample = lum > 0.36 ? '#111113' : '#F4F4F5';
+
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.title = `Copiar ${item.hex} (tom ${item.stop})`;
+          row.className = 'w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-studio-bg hover:bg-studio-elevated border border-studio-border hover:border-zinc-600 transition-colors text-left group';
+
+          row.innerHTML = `
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-7 h-6 rounded-md border border-white/10 shrink-0 flex items-center justify-center text-[9px] font-mono font-bold shadow-inner" style="background-color: ${item.hex}; color: ${textSample};">
+                ${item.stop}
+              </span>
+              <span class="font-mono text-xs text-studio-text font-medium">${item.hex}</span>
+              ${item.isBase ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">BASE</span>' : ''}
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] font-mono text-studio-subtle">${bestContrast.toFixed(1)}:1</span>
+              <svg class="w-3 h-3 text-studio-subtle group-hover:text-studio-text transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </div>
+          `;
+
+          row.addEventListener('click', () => copyToClipboard(item.hex));
+          scaleList.appendChild(row);
+        });
+
+        // Atualiza os previews de código (Sidebar + Modal de Exportação)
+        const sidebarCode = document.getElementById('twCodePreview');
+        if (sidebarCode) {
+          sidebarCode.textContent = buildTailwindSnippet(state.tailwind.format, state.tailwind.scope);
+        }
+        const modalCode = document.getElementById('exportTwCodePreview');
+        const modalFmt = document.getElementById('exportTwFormat');
+        const modalScope = document.getElementById('exportTwScope');
+        if (modalCode && modalFmt && modalScope) {
+          modalCode.textContent = buildTailwindSnippet(modalFmt.value, modalScope.value);
+        }
+      }
+
+      /* =====================================================================
+       * 3. LUTs DE ALTA PERFORMANCE PARA MÍDIA (TRITONE, DUOTONE, 3D POSTERIZE)
+       * ===================================================================== */
+      const lutCache = {
+        tritoneLUT: new Uint8ClampedArray(256 * 3),
+        duotoneLUT: new Uint8ClampedArray(256 * 3),
+        posterizeLUT: new Uint8ClampedArray(32768 * 3)
+      };
+
+      const offscreenSrc = document.createElement('canvas');
+      const offscreenSrcCtx = offscreenSrc.getContext('2d', { willReadFrequently: true });
+      const offscreenOut = document.createElement('canvas');
+      const offscreenOutCtx = offscreenOut.getContext('2d');
+      let mediaNeedsReprocess = true;
+
+      function rebuildMediaLUTs() {
+        const bgRgb = ColorEngine.hexToRgb(state.palette.bg);
+        const surfRgb = ColorEngine.hexToRgb(state.palette.surface);
+        const priRgb = ColorEngine.hexToRgb(state.palette.primary);
+        const accRgb = ColorEngine.hexToRgb(state.palette.accent);
+        const txtRgb = ColorEngine.hexToRgb(state.palette.text);
+
+        const bgLum = ColorEngine.getRelativeLuminance(state.palette.bg);
+        const shadowRgb = bgLum < 0.5 ? bgRgb : txtRgb;
+        const lightCandidate = bgLum < 0.5 ? accRgb : surfRgb;
+        const lightRgb = ColorEngine.getContrastRatio(
+          ColorEngine.rgbToHex(shadowRgb.r, shadowRgb.g, shadowRgb.b),
+          ColorEngine.rgbToHex(lightCandidate.r, lightCandidate.g, lightCandidate.b)
+        ) < 2.2 ? (bgLum < 0.5 ? txtRgb : accRgb) : lightCandidate;
+
+        // 1) Tritone LUT (Sombra -> Primária -> Luz) & Duotone LUT (Sombra -> Primária/Luz)
+        for (let i = 0; i < 256; i++) {
+          const t = i / 255;
+          const idx = i * 3;
+
+          // Tritone
+          let tr, tg, tb;
+          if (t < 0.5) {
+            const k = t * 2;
+            tr = shadowRgb.r + (priRgb.r - shadowRgb.r) * k;
+            tg = shadowRgb.g + (priRgb.g - shadowRgb.g) * k;
+            tb = shadowRgb.b + (priRgb.b - shadowRgb.b) * k;
+          } else {
+            const k = (t - 0.5) * 2;
+            tr = priRgb.r + (lightRgb.r - priRgb.r) * k;
+            tg = priRgb.g + (lightRgb.g - priRgb.g) * k;
+            tb = priRgb.b + (lightRgb.b - priRgb.b) * k;
+          }
+          lutCache.tritoneLUT[idx] = tr;
+          lutCache.tritoneLUT[idx + 1] = tg;
+          lutCache.tritoneLUT[idx + 2] = tb;
+
+          // Duotone (Sombra -> Primária/Destaque)
+          const duoLight = bgLum < 0.5 ? priRgb : accRgb;
+          lutCache.duotoneLUT[idx]     = shadowRgb.r + (duoLight.r - shadowRgb.r) * t;
+          lutCache.duotoneLUT[idx + 1] = shadowRgb.g + (duoLight.g - shadowRgb.g) * t;
+          lutCache.duotoneLUT[idx + 2] = shadowRgb.b + (duoLight.b - shadowRgb.b) * t;
+        }
+
+        // 2) Posterize 3D LUT (32x32x32)
+        const paletteRgbs = [bgRgb, surfRgb, priRgb, accRgb, txtRgb];
+        let ptr = 0;
+        for (let r5 = 0; r5 < 32; r5++) {
+          const r = (r5 << 3) | (r5 >> 2);
+          for (let g5 = 0; g5 < 32; g5++) {
+            const g = (g5 << 3) | (g5 >> 2);
+            for (let b5 = 0; b5 < 32; b5++) {
+              const b = (b5 << 3) | (b5 >> 2);
+              let minDist = Infinity;
+              let best = paletteRgbs[0];
+              for (let p = 0; p < 5; p++) {
+                const c = paletteRgbs[p];
+                const dr = r - c.r;
+                const dg = g - c.g;
+                const db = b - c.b;
+                const dist = 2 * dr * dr + 4 * dg * dg + 3 * db * db;
+                if (dist < minDist) { minDist = dist; best = c; }
+              }
+              lutCache.posterizeLUT[ptr++] = best.r;
+              lutCache.posterizeLUT[ptr++] = best.g;
+              lutCache.posterizeLUT[ptr++] = best.b;
+            }
+          }
+        }
+        mediaNeedsReprocess = true;
+      }
+
+      function processMediaFrame() {
+        const m = state.media;
+        if (!m.element || !m.width || !m.height) return null;
+
+        const maxProcDim = m.type === 'video' ? 560 : 960;
+        const scale = Math.min(1, maxProcDim / Math.max(m.width, m.height));
+        const pw = Math.max(1, Math.round(m.width * scale));
+        const ph = Math.max(1, Math.round(m.height * scale));
+
+        if (offscreenSrc.width !== pw || offscreenSrc.height !== ph) {
+          offscreenSrc.width = pw;
+          offscreenSrc.height = ph;
+          offscreenOut.width = pw;
+          offscreenOut.height = ph;
+        }
+
+        offscreenSrcCtx.clearRect(0, 0, pw, ph);
+        offscreenSrcCtx.drawImage(m.element, 0, 0, pw, ph);
+
+        const intensity = m.mode === 'original' ? 0 : (m.intensity / 100);
+        if (intensity <= 0.001) {
+          offscreenOutCtx.clearRect(0, 0, pw, ph);
+          offscreenOutCtx.drawImage(offscreenSrc, 0, 0);
+          mediaNeedsReprocess = false;
+          return offscreenOut;
+        }
+
+        const imgData = offscreenSrcCtx.getImageData(0, 0, pw, ph);
+        const data = imgData.data;
+        const len = data.length;
+        const invInt = 1 - intensity;
+
+        if (m.mode === 'tritone' || m.mode === 'duotone') {
+          const lut = m.mode === 'tritone' ? lutCache.tritoneLUT : lutCache.duotoneLUT;
+          for (let i = 0; i < len; i += 4) {
+            if (data[i + 3] === 0) continue;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const luma = (r * 54 + g * 183 + b * 19) >> 8;
+            const lIdx = luma * 3;
+            data[i]     = r * invInt + lut[lIdx] * intensity;
+            data[i + 1] = g * invInt + lut[lIdx + 1] * intensity;
+            data[i + 2] = b * invInt + lut[lIdx + 2] * intensity;
+          }
+        } else if (m.mode === 'posterize') {
+          const lut3d = lutCache.posterizeLUT;
+          for (let i = 0; i < len; i += 4) {
+            if (data[i + 3] === 0) continue;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const idx = (((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)) * 3;
+            data[i]     = r * invInt + lut3d[idx] * intensity;
+            data[i + 1] = g * invInt + lut3d[idx + 1] * intensity;
+            data[i + 2] = b * invInt + lut3d[idx + 2] * intensity;
+          }
+        } else if (m.mode === 'silhouette') {
+          const sil = ColorEngine.hexToRgb(state.palette[m.silhouetteRole] || state.palette.primary);
+          for (let i = 0; i < len; i += 4) {
+            if (data[i + 3] === 0) continue;
+            data[i]     = data[i] * invInt + sil.r * intensity;
+            data[i + 1] = data[i + 1] * invInt + sil.g * intensity;
+            data[i + 2] = data[i + 2] * invInt + sil.b * intensity;
+          }
+        }
+
+        offscreenOutCtx.putImageData(imgData, 0, 0);
+        mediaNeedsReprocess = false;
+        return offscreenOut;
+      }
+
+      /* =====================================================================
+       * 4. MOTOR DE FORMAS GEOMÉTRICAS INTELIGENTES (SEM SOBREPOR A MÍDIA)
+       * ===================================================================== */
+      function randRange(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      // Calcula a caixa delimitadora exata da mídia no canvas (em pixels)
+      function getMediaBoundingBox(w, stageH) {
+        const m = state.media;
+        if (!m.enabled || !m.element || !m.width || !m.height) return null;
+        const mScale = m.scale / 100;
+        const fit = Math.min((w * 0.84) / m.width, (stageH * 0.84) / m.height);
+        const dw = m.width * fit * mScale;
+        const dh = m.height * fit * mScale;
+        return {
+          x: (w - dw) / 2,
+          y: (stageH - dh) / 2,
+          w: dw,
+          h: dh
+        };
+      }
+
+      // Verifica se um círculo centrado em (px, py) com raio r colide com o retângulo expandido
+      function collidesWithBox(px, py, r, box, margin) {
+        const left = box.x - margin;
+        const right = box.x + box.w + margin;
+        const top = box.y - margin;
+        const bottom = box.y + box.h + margin;
+        const closestX = ColorEngine.clamp(px, left, right);
+        const closestY = ColorEngine.clamp(py, top, bottom);
+        const dx = px - closestX;
+        const dy = py - closestY;
+        return (dx * dx + dy * dy) < (r * r);
+      }
+
+      // Gera posições aleatórias inteligentes para as formas geométricas
+      function generateShapeLayout() {
+        const dim = RATIOS[state.ratio];
+        const w = dim.w;
+        const h = dim.h;
+        const minDim = Math.min(w, h);
+        const count = state.shapeCount;
+        const mediaBox = getMediaBoundingBox(w, h);
+        const scaleFactor = state.shapeScale / 100;
+
+        const bauhausKinds = ['circle', 'square', 'triangle', 'semicircle', 'arc', 'pill'];
+        const rolesPool = ['surface', 'primary', 'accent', 'surface', 'primary'];
+
+        const items = [];
+        const margin = mediaBox ? Math.max(18, minDim * 0.03) : 0;
+
+        for (let i = 0; i < count; i++) {
+          const kind = bauhausKinds[i % bauhausKinds.length];
+          const role = rolesPool[i % rolesPool.length];
+          // Tamanho base relativo à menor dimensão, ajustado suavemente pela quantidade
+          const densityAdj = count > 10 ? Math.max(0.55, 1 - (count - 10) * 0.025) : 1;
+          const baseSizeNorm = randRange(0.065, 0.165) * densityAdj;
+          let radiusPx = baseSizeNorm * minDim * scaleFactor;
+          const rotation = randRange(0, Math.PI * 2);
+          const strokeOnly = Math.random() < 0.22;
+          const phase = randRange(0, Math.PI * 2);
+
+          let px = w * 0.5;
+          let py = h * 0.5;
+          let sizeMultiplier = 1;
+
+          if (mediaBox) {
+            // 4 faixas livres ao redor da mídia (esquerda, direita, topo, base)
+            const zones = [];
+            const leftSpace = mediaBox.x - margin;
+            const rightSpace = w - (mediaBox.x + mediaBox.w + margin);
+            const topSpace = mediaBox.y - margin;
+            const bottomSpace = h - (mediaBox.y + mediaBox.h + margin);
+
+            if (leftSpace > 24) zones.push({ name: 'left', x0: 12, x1: leftSpace, y0: 12, y1: h - 12, area: leftSpace * h });
+            if (rightSpace > 24) zones.push({ name: 'right', x0: mediaBox.x + mediaBox.w + margin, x1: w - 12, y0: 12, y1: h - 12, area: rightSpace * h });
+            if (topSpace > 24) zones.push({ name: 'top', x0: 12, x1: w - 12, y0: 12, y1: topSpace, area: topSpace * w });
+            if (bottomSpace > 24) zones.push({ name: 'bottom', x0: 12, x1: w - 12, y0: mediaBox.y + mediaBox.h + margin, y1: h - 12, area: bottomSpace * w });
+
+            let placed = false;
+            // Tenta posicionar sem sobrepor a mídia nem amontoar demais
+            for (let attempt = 0; attempt < 90; attempt++) {
+              const shrink = attempt > 50 ? 0.65 : (attempt > 25 ? 0.82 : 1);
+              const testR = radiusPx * shrink;
+
+              let candX, candY;
+              if (zones.length > 0) {
+                // Escolhe uma zona ponderada pela área disponível
+                const totalArea = zones.reduce((s, z) => s + z.area, 0);
+                let pick = Math.random() * totalArea;
+                let zone = zones[0];
+                for (const z of zones) {
+                  pick -= z.area;
+                  if (pick <= 0) { zone = z; break; }
+                }
+                const minX = Math.min(zone.x0 + testR * 0.6, zone.x1);
+                const maxX = Math.max(zone.x0, zone.x1 - testR * 0.6);
+                const minY = Math.min(zone.y0 + testR * 0.6, zone.y1);
+                const maxY = Math.max(zone.y0, zone.y1 - testR * 0.6);
+                candX = randRange(Math.min(minX, maxX), Math.max(minX, maxX));
+                candY = randRange(Math.min(minY, maxY), Math.max(minY, maxY));
+              } else {
+                // Caso a mídia ocupe quase 100%, ancora nos cantos externos
+                const corners = [
+                  [testR * 0.5, testR * 0.5],
+                  [w - testR * 0.5, testR * 0.5],
+                  [testR * 0.5, h - testR * 0.5],
+                  [w - testR * 0.5, h - testR * 0.5]
+                ];
+                const c = corners[i % 4];
+                candX = c[0];
+                candY = c[1];
+              }
+
+              if (!collidesWithBox(candX, candY, testR, mediaBox, margin)) {
+                // Evita sobreposição excessiva com outras formas já posicionadas
+                let tooClose = false;
+                for (const other of items) {
+                  const ox = other.nx * w;
+                  const oy = other.ny * h;
+                  const dist = Math.hypot(candX - ox, candY - oy);
+                  if (dist < (testR + other.sizeNorm * minDim * scaleFactor * other.sizeMult) * 0.65) {
+                    tooClose = true;
+                    break;
+                  }
+                }
+                if (!tooClose || attempt > 65) {
+                  px = candX;
+                  py = candY;
+                  sizeMultiplier = shrink;
+                  placed = true;
+                  break;
+                }
+              }
+            }
+
+            // Fallback garantido na borda externa se o espaço for muito apertado
+            if (!placed) {
+              const edge = i % 4;
+              const fallbackR = Math.min(radiusPx * 0.5, Math.max(12, Math.min(leftSpace, rightSpace, topSpace, bottomSpace) * 0.45));
+              sizeMultiplier = fallbackR / Math.max(1, radiusPx);
+              if (edge === 0) { px = fallbackR; py = randRange(fallbackR, h - fallbackR); }
+              else if (edge === 1) { px = w - fallbackR; py = randRange(fallbackR, h - fallbackR); }
+              else if (edge === 2) { px = randRange(fallbackR, w - fallbackR); py = fallbackR; }
+              else { px = randRange(fallbackR, w - fallbackR); py = h - fallbackR; }
+            }
+          } else {
+            // Sem mídia: distribuição harmoniosa pelo canvas evitando empilhamento excessivo
+            for (let attempt = 0; attempt < 40; attempt++) {
+              const padX = w * 0.1;
+              const padY = h * 0.1;
+              const candX = randRange(padX, w - padX);
+              const candY = randRange(padY, h - padY);
+              let tooClose = false;
+              for (const other of items) {
+                const dist = Math.hypot(candX - other.nx * w, candY - other.ny * h);
+                if (dist < radiusPx * 1.15) { tooClose = true; break; }
+              }
+              px = candX;
+              py = candY;
+              if (!tooClose) break;
+            }
+          }
+
+          items.push({
+            nx: px / w,
+            ny: py / h,
+            sizeNorm: baseSizeNorm,
+            sizeMult: sizeMultiplier,
+            rotation,
+            kind,
+            role,
+            strokeOnly,
+            phase
+          });
+        }
+
+        state.shapeItems = items;
+      }
+
+      /* =====================================================================
+       * 5. GERADOR DE PALETAS (LEVE, AGRESSIVO E RANDOMIZAR HARMONIA)
+       * ===================================================================== */
+      function applyWcagRules(pal) {
+        if (!state.ensureWcag) return pal;
+        const res = { ...pal };
+        if (!state.locks.text) res.text = ColorEngine.enforceContrast(res.bg, res.text, 7.0);
+        if (!state.locks.primary) res.primary = ColorEngine.enforceContrast(res.bg, res.primary, 3.2);
+        if (!state.locks.accent) res.accent = ColorEngine.enforceContrast(res.bg, res.accent, 3.2);
+        return res;
+      }
+
+      function generateHarmonyPalette(mode = 'aggressive') {
+        // mode: 'mild' | 'aggressive' | 'harmony'
+        state.tagTextMatchBg = false;
+        if (mode === 'harmony') {
+          // Sorteia uma nova harmonia diferente da atual
+          const others = HARMONIES.filter(h => h.key !== state.harmony);
+          const picked = others[Math.floor(Math.random() * others.length)];
+          state.harmony = picked.key;
+          document.getElementById('harmonySelect').value = state.harmony;
+          showToast(`Nova harmonia: ${picked.label}`);
+        }
+
+        const current = state.palette;
+        let next = { ...current };
+
+        if (mode === 'mild') {
+          const hueShift = randRange(-14, 14);
+          ROLES.forEach(({ key }) => {
+            if (state.locks[key]) return;
+            const hsl = ColorEngine.hexToHsl(current[key]);
+            const h = (hsl.h + hueShift + randRange(-6, 6) + 360) % 360;
+            const s = ColorEngine.clamp(hsl.s + randRange(-8, 8), 4, 96);
+            const l = ColorEngine.clamp(hsl.l + randRange(-5, 5), 4, 96);
+            next[key] = ColorEngine.hslToHex(h, s, l);
+          });
+          commitPalette(applyWcagRules(next), true);
+          return;
+        }
+
+        // Agressivo (ou Randomizar Harmonia)
+        const baseH = state.locks.primary
+          ? ColorEngine.hexToHsl(current.primary).h
+          : Math.floor(Math.random() * 360);
+
+        const isDark = state.locks.bg
+          ? ColorEngine.getRelativeLuminance(current.bg) < 0.35
+          : Math.random() > 0.42;
+
+        let hSurface = baseH, hPrimary = baseH, hAccent = baseH;
+        switch (state.harmony) {
+          case 'monochromatic':
+            hSurface = baseH; hPrimary = baseH; hAccent = (baseH + randRange(-8, 8) + 360) % 360; break;
+          case 'analogous':
+            hSurface = (baseH + 16) % 360; hPrimary = baseH; hAccent = (baseH + (Math.random() > 0.5 ? 32 : -32) + 360) % 360; break;
+          case 'complementary':
+            hSurface = baseH; hPrimary = baseH; hAccent = (baseH + 180) % 360; break;
+          case 'split-complementary':
+            hSurface = (baseH + 150) % 360; hPrimary = baseH; hAccent = (baseH + 210) % 360; break;
+          case 'triadic':
+            hSurface = (baseH + 120) % 360; hPrimary = baseH; hAccent = (baseH + 240) % 360; break;
+          case 'tetradic':
+            hSurface = (baseH + 90) % 360; hPrimary = baseH; hAccent = (baseH + 180) % 360; break;
+          case 'editorial':
+            hSurface = baseH; hPrimary = baseH; hAccent = (baseH + (Math.random() > 0.5 ? 165 : 45)) % 360; break;
+        }
+
+        const isEditorial = state.harmony === 'editorial';
+        const isMono = state.harmony === 'monochromatic';
+
+        if (!state.locks.bg) {
+          next.bg = ColorEngine.hslToHex(baseH, isEditorial ? randRange(4, 12) : randRange(10, 26), isDark ? randRange(6, 13) : randRange(92, 97));
+        }
+        if (!state.locks.surface) {
+          next.surface = ColorEngine.hslToHex(hSurface, isEditorial ? randRange(6, 16) : randRange(12, 32), isDark ? randRange(15, 23) : randRange(83, 90));
+        }
+        if (!state.locks.primary) {
+          next.primary = ColorEngine.hslToHex(hPrimary, isMono ? randRange(35, 65) : (isEditorial ? randRange(72, 95) : randRange(58, 86)), isDark ? randRange(54, 68) : randRange(38, 52));
+        }
+        if (!state.locks.accent) {
+          next.accent = ColorEngine.hslToHex(hAccent, isMono ? randRange(25, 55) : (isEditorial ? randRange(75, 96) : randRange(62, 90)), isDark ? randRange(58, 74) : randRange(42, 56));
+        }
+        if (!state.locks.text) {
+          next.text = ColorEngine.hslToHex(baseH, isEditorial ? randRange(4, 10) : randRange(8, 20), isDark ? randRange(92, 97) : randRange(8, 15));
+        }
+
+        commitPalette(applyWcagRules(next), true);
+      }
+
+      function invertPolarity() {
+        const next = { ...state.palette };
+        ROLES.forEach(({ key }) => {
+          if (state.locks[key]) return;
+          const hsl = ColorEngine.hexToHsl(next[key]);
+          next[key] = ColorEngine.hslToHex(hsl.h, hsl.s, ColorEngine.clamp(100 - hsl.l, 5, 96));
+        });
+        commitPalette(applyWcagRules(next), true);
+      }
+
+      function rotateRoles() {
+        const unlocked = ROLES.map(r => r.key).filter(k => !state.locks[k]);
+        if (unlocked.length < 2) {
+          showToast('Destrave ao menos 2 cores para rotacionar.');
+          return;
+        }
+        const next = { ...state.palette };
+        const last = next[unlocked[unlocked.length - 1]];
+        for (let i = unlocked.length - 1; i > 0; i--) {
+          next[unlocked[i]] = next[unlocked[i - 1]];
+        }
+        next[unlocked[0]] = last;
+        state.tagTextMatchBg = true;
+        commitPalette(applyWcagRules(next), true);
+      }
+
+      /* =====================================================================
+       * 6. HISTÓRICO (UNDO / REDO)
+       * ===================================================================== */
+      function commitPalette(newPalette, pushHistory = true) {
+        state.palette = { ...newPalette };
+        if (pushHistory) {
+          state.history = state.history.slice(0, state.historyIndex + 1);
+          state.history.push({ palette: { ...state.palette }, harmony: state.harmony });
+          if (state.history.length > 50) state.history.shift();
+          state.historyIndex = state.history.length - 1;
+        }
+        rebuildMediaLUTs();
+        updateAllUI();
+      }
+
+      function undo() {
+        if (state.historyIndex <= 0) return;
+        state.historyIndex--;
+        const snap = state.history[state.historyIndex];
+        state.harmony = snap.harmony;
+        document.getElementById('harmonySelect').value = state.harmony;
+        commitPalette(snap.palette, false);
+      }
+
+      function redo() {
+        if (state.historyIndex >= state.history.length - 1) return;
+        state.historyIndex++;
+        const snap = state.history[state.historyIndex];
+        state.harmony = snap.harmony;
+        document.getElementById('harmonySelect').value = state.harmony;
+        commitPalette(snap.palette, false);
+      }
+
+      /* =====================================================================
+       * 7. RENDERIZAÇÃO DO CANVAS E AJUSTE RESPONSIVO PARA TODAS AS PROPORÇÕES
+       * ===================================================================== */
+      const mainCanvas = document.getElementById('mainCanvas');
+      const ctx = mainCanvas.getContext('2d');
+      const stageContainer = document.getElementById('stageContainer');
+
+      // Estado de interação direta com textos no canvas (hover + drag)
+      const textHitBoxes = {};
+      let hoveredTextId = null;
+      let draggingTextId = null;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+
+      // Carregador dinâmico de Google Fonts via CSS2 API + document.fonts.load
+      async function ensureGoogleFontLoaded(fontName, notify = false) {
+        const clean = (fontName || '').trim().replace(/\s+/g, ' ');
+        if (!clean) return false;
+
+        if (!availableFonts.some(f => f.toLowerCase() === clean.toLowerCase())) {
+          availableFonts.push(clean);
+          populateFontSelect();
+        }
+
+        const canonical = availableFonts.find(f => f.toLowerCase() === clean.toLowerCase()) || clean;
+
+        if (!loadedGoogleFonts.has(canonical)) {
+          const familyParam = encodeURIComponent(canonical).replace(/%20/g, '+');
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${familyParam}:wght@400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+
+          try {
+            await new Promise((resolve, reject) => {
+              link.onload = resolve;
+              link.onerror = reject;
+              setTimeout(resolve, 2500);
+            });
+            if (document.fonts && document.fonts.load) {
+              await Promise.all([
+                document.fonts.load(`400 28px "${canonical}"`),
+                document.fonts.load(`700 48px "${canonical}"`)
+              ]);
+            }
+            loadedGoogleFonts.add(canonical);
+            if (notify) showToast(`Fonte "${canonical}" carregada!`);
+          } catch {
+            if (notify) showToast(`Não foi possível carregar "${canonical}". Verifique o nome no Google Fonts.`);
+            return false;
+          }
+        } else if (notify) {
+          showToast(`Fonte "${canonical}" já disponível.`);
+        }
+        return canonical;
+      }
+
+      function populateFontSelect() {
+        const select = document.getElementById('activeTextFont');
+        if (!select) return;
+        const currentVal = state.texts[state.activeTextId].font;
+        select.innerHTML = '';
+        availableFonts.forEach(font => {
+          const opt = document.createElement('option');
+          opt.value = font;
+          opt.textContent = font;
+          select.appendChild(opt);
+        });
+        select.value = currentVal;
+      }
+
+      function syncTypographyControls() {
+        const id = state.activeTextId;
+        const item = state.texts[id];
+
+        // Sub-abas
+        document.querySelectorAll('.texttab-btn').forEach(btn => {
+          const active = btn.dataset.texttab === id;
+          btn.classList.toggle('bg-studio-elevated', active);
+          btn.classList.toggle('text-studio-text', active);
+          btn.classList.toggle('text-studio-muted', !active);
+        });
+
+        document.getElementById('textVisibleToggle').checked = item.visible;
+        document.getElementById('textVisibleLabel').textContent = `Exibir ${item.label}`;
+        document.getElementById('activeTextInput').value = item.content;
+
+        populateFontSelect();
+        document.getElementById('activeTextFont').value = item.font;
+
+        document.getElementById('activeTextSizeRange').value = item.size;
+        document.getElementById('activeTextSizeVal').textContent = `${item.size} px`;
+
+        document.getElementById('activeTextColorRole').value = item.colorRole;
+
+        document.getElementById('activeTextPosXRange').value = item.x;
+        document.getElementById('activeTextPosXVal').textContent = `${Math.round(item.x)}%`;
+        document.getElementById('activeTextPosYRange').value = item.y;
+        document.getElementById('activeTextPosYVal').textContent = `${Math.round(item.y)}%`;
+
+        document.querySelectorAll('.align-btn').forEach(b => {
+          const active = b.dataset.align === item.align;
+          b.classList.toggle('bg-studio-elevated', active);
+          b.classList.toggle('text-studio-text', active);
+          b.classList.toggle('text-studio-muted', !active);
+        });
+
+        // Sincroniza os botões rápidos de ativar/desativar Título, Subtítulo e Selo
+        document.querySelectorAll('.quick-text-toggle').forEach(btn => {
+          const tid = btn.dataset.quicktext;
+          const visible = Boolean(state.texts[tid] && state.texts[tid].visible);
+          btn.classList.toggle('bg-studio-elevated', visible);
+          btn.classList.toggle('border-zinc-600', visible);
+          btn.classList.toggle('text-studio-text', visible);
+          btn.classList.toggle('bg-studio-panel', !visible);
+          btn.classList.toggle('border-studio-border', !visible);
+          btn.classList.toggle('text-studio-subtle', !visible);
+          btn.classList.toggle('line-through', !visible);
+        });
+      }
+
+      function updateToggleBadge(badgeId, isOn) {
+        const badge = document.getElementById(badgeId);
+        if (!badge) return;
+        if (isOn) {
+          badge.textContent = 'ON';
+          badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+        } else {
+          badge.textContent = 'OFF';
+          badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-studio-elevated text-studio-subtle border border-studio-border';
+        }
+      }
+
+      function syncMediaEnabledUI() {
+        const toggle = document.getElementById('mediaEnabledToggle');
+        if (toggle) toggle.checked = state.media.enabled;
+        updateToggleBadge('mediaEnabledBadge', state.media.enabled);
+        const hasActiveMedia = Boolean(state.media.enabled && state.media.element);
+        document.getElementById('mediaSafeZoneBadge').classList.toggle('hidden', !hasActiveMedia);
+        document.getElementById('shapePosHint').textContent = hasActiveMedia
+          ? 'Reposiciona formas ao redor da mídia'
+          : 'Distribui formas pelo canvas';
+      }
+
+      // Ajusta CSS width/height do canvas para caber perfeitamente no palco (inclusive 20:7 e 9:16)
+      function fitCanvasToStage() {
+        const dim = RATIOS[state.ratio];
+        const rect = stageContainer.getBoundingClientRect();
+        const pad = window.innerWidth < 640 ? 32 : 64;
+        const availW = Math.max(200, rect.width - pad);
+        const availH = Math.max(200, rect.height - pad);
+        const ratio = dim.w / dim.h;
+
+        let displayW = availW;
+        let displayH = displayW / ratio;
+        if (displayH > availH) {
+          displayH = availH;
+          displayW = displayH * ratio;
+        }
+
+        mainCanvas.style.width = `${Math.round(displayW)}px`;
+        mainCanvas.style.height = `${Math.round(displayH)}px`;
+      }
+
+      function updateCanvasResolution() {
+        const dim = RATIOS[state.ratio];
+        mainCanvas.width = dim.w;
+        mainCanvas.height = dim.h;
+        document.getElementById('exportResolutionLabel').textContent = `${dim.w} × ${dim.h} px`;
+        document.getElementById('stageRatioTag').textContent = `${state.ratio} • ${dim.w}×${dim.h}`;
+        fitCanvasToStage();
+        // Recalcula formas para respeitar a nova proporção (especialmente se houver mídia)
+        generateShapeLayout();
+      }
+
+      function roundRect(c, x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        c.beginPath();
+        c.moveTo(x + radius, y);
+        c.arcTo(x + w, y, x + w, y + h, radius);
+        c.arcTo(x + w, y + h, x, y + h, radius);
+        c.arcTo(x, y + h, x, y, radius);
+        c.arcTo(x, y, x + w, y, radius);
+        c.closePath();
+      }
+
+      function drawWrappedText(c, text, x, y, maxWidth, lineHeight, align) {
+        c.textAlign = align;
+        const words = text.split(/\s+/);
+        let line = '';
+        const lines = [];
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line ? line + ' ' + words[n] : words[n];
+          if (c.measureText(testLine).width > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n];
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) lines.push(line);
+
+        const totalH = lines.length * lineHeight;
+        const startY = y - (totalH - lineHeight) / 2;
+        let maxLineW = 0;
+
+        lines.forEach((l, i) => {
+          const w = c.measureText(l).width;
+          if (w > maxLineW) maxLineW = w;
+          c.fillText(l, x, startY + i * lineHeight);
+        });
+
+        let boxX = x - maxLineW / 2;
+        if (align === 'left') boxX = x;
+        else if (align === 'right') boxX = x - maxLineW;
+
+        return {
+          x: boxX,
+          y: startY - lineHeight / 2,
+          w: maxLineW,
+          h: totalH
+        };
+      }
+
+      function drawSingleShape(c, type, x, y, r, rot, color, strokeOnly) {
+        c.save();
+        c.translate(x, y);
+        c.rotate(rot);
+        c.fillStyle = color;
+        c.strokeStyle = color;
+        c.lineWidth = Math.max(2.5, r * 0.12);
+        c.lineCap = 'round';
+
+        if (type === 'circle') {
+          c.beginPath();
+          c.arc(0, 0, r, 0, Math.PI * 2);
+          strokeOnly ? c.stroke() : c.fill();
+        } else if (type === 'square') {
+          roundRect(c, -r * 0.85, -r * 0.85, r * 1.7, r * 1.7, r * 0.22);
+          strokeOnly ? c.stroke() : c.fill();
+        } else if (type === 'triangle') {
+          c.beginPath();
+          c.moveTo(0, -r);
+          c.lineTo(r * 0.92, r * 0.72);
+          c.lineTo(-r * 0.92, r * 0.72);
+          c.closePath();
+          strokeOnly ? c.stroke() : c.fill();
+        } else if (type === 'semicircle') {
+          c.beginPath();
+          c.arc(0, 0, r, 0, Math.PI);
+          c.closePath();
+          strokeOnly ? c.stroke() : c.fill();
+        } else if (type === 'pill') {
+          roundRect(c, -r * 1.1, -r * 0.42, r * 2.2, r * 0.84, r * 0.42);
+          strokeOnly ? c.stroke() : c.fill();
+        } else if (type === 'arc' || type === 'lines') {
+          c.beginPath();
+          c.arc(0, 0, r * 0.9, 0, Math.PI * 1.15);
+          c.stroke();
+          c.beginPath();
+          c.moveTo(-r * 0.7, -r * 0.45);
+          c.lineTo(r * 0.7, -r * 0.45);
+          c.stroke();
+        }
+        c.restore();
+      }
+
+      function renderComposition(targetCtx, w, h, animT = 0, includePaletteBar = false, isPreview = false) {
+        const pal = state.palette;
+        const barH = includePaletteBar ? Math.max(76, Math.round(h * 0.12)) : 0;
+        const stageH = h - barH;
+        const minDim = Math.min(w, stageH);
+        const floatY = animT > 0 ? Math.sin(animT * Math.PI * 2) * (minDim * 0.015) : 0;
+
+        // 1. Fundo
+        targetCtx.fillStyle = pal.bg;
+        targetCtx.fillRect(0, 0, w, h);
+
+        // 2. Formas Geométricas
+        if (state.shapesEnabled && state.shape !== 'none') {
+          targetCtx.save();
+          targetCtx.beginPath();
+          targetCtx.rect(0, 0, w, stageH);
+          targetCtx.clip();
+
+          if (state.shape === 'card') {
+            // Card editorial centralizado com barra de destaque
+            const scale = state.shapeScale / 100;
+            const cw = Math.min(w * 0.86, w * 0.62 * Math.max(0.65, scale));
+            const ch = Math.min(stageH * 0.82, stageH * 0.68 * Math.max(0.65, scale));
+            const cx = (w - cw) / 2;
+            const cy = (stageH - ch) / 2 + floatY * 0.4;
+
+            targetCtx.fillStyle = pal.surface;
+            roundRect(targetCtx, cx, cy, cw, ch, Math.min(28, minDim * 0.04));
+            targetCtx.fill();
+
+            targetCtx.fillStyle = pal.primary;
+            roundRect(targetCtx, cx, cy, cw, Math.max(8, ch * 0.035), Math.min(28, minDim * 0.04));
+            targetCtx.fill();
+
+            targetCtx.fillStyle = pal.accent;
+            targetCtx.beginPath();
+            targetCtx.arc(cx + cw - minDim * 0.06, cy + ch - minDim * 0.06, Math.max(10, minDim * 0.025 * scale), 0, Math.PI * 2);
+            targetCtx.fill();
+          } else if (state.shape === 'grid') {
+            // Grade geométrica minimalista com nós de destaque
+            const cols = Math.max(4, Math.round(state.shapeCount * 0.6));
+            const rows = Math.max(3, Math.round((cols * stageH) / w));
+            const stepX = w / cols;
+            const stepY = stageH / rows;
+
+            targetCtx.strokeStyle = pal.surface;
+            targetCtx.lineWidth = Math.max(1.5, minDim * 0.0025);
+            for (let i = 1; i < cols; i++) {
+              targetCtx.beginPath();
+              targetCtx.moveTo(i * stepX, 0);
+              targetCtx.lineTo(i * stepX, stageH);
+              targetCtx.stroke();
+            }
+            for (let j = 1; j < rows; j++) {
+              targetCtx.beginPath();
+              targetCtx.moveTo(0, j * stepY);
+              targetCtx.lineTo(w, j * stepY);
+              targetCtx.stroke();
+            }
+
+            const dotR = Math.max(3, minDim * 0.009 * (state.shapeScale / 100));
+            for (let i = 1; i < cols; i++) {
+              for (let j = 1; j < rows; j++) {
+                if ((i + j) % 3 === 0) {
+                  targetCtx.fillStyle = (i + j) % 2 === 0 ? pal.primary : pal.accent;
+                  targetCtx.beginPath();
+                  targetCtx.arc(i * stepX, j * stepY, dotR, 0, Math.PI * 2);
+                  targetCtx.fill();
+                }
+              }
+            }
+          } else {
+            // Formas dinâmicas distribuídas (Bauhaus, Círculos, Quadrados, Triângulos, Linhas)
+            const scaleFactor = state.shapeScale / 100;
+            state.shapeItems.forEach(item => {
+              const driftX = animT > 0 ? Math.cos(animT * Math.PI * 2 + item.phase) * (minDim * 0.012) : 0;
+              const driftY = animT > 0 ? Math.sin(animT * Math.PI * 2 + item.phase) * (minDim * 0.012) : 0;
+              const x = item.nx * w + driftX;
+              const y = item.ny * stageH + driftY;
+              const r = Math.max(6, item.sizeNorm * minDim * scaleFactor * item.sizeMult);
+              const rot = item.rotation + (animT > 0 ? Math.sin(animT * Math.PI * 2 + item.phase) * 0.18 : 0);
+              const color = pal[item.role] || pal.primary;
+
+              let drawKind = item.kind;
+              if (state.shape === 'circle') drawKind = 'circle';
+              else if (state.shape === 'square') drawKind = 'square';
+              else if (state.shape === 'triangle') drawKind = 'triangle';
+              else if (state.shape === 'lines') drawKind = 'lines';
+
+              drawSingleShape(targetCtx, drawKind, x, y, r, rot, color, item.strokeOnly);
+            });
+          }
+          targetCtx.restore();
+        }
+
+        // 3. Mídia Recolorida (PNG, JPG, WebP, MP4, MOV)
+        if (state.media.enabled && state.media.element && state.media.width && state.media.height) {
+          if (state.media.type === 'video' || mediaNeedsReprocess) {
+            processMediaFrame();
+          }
+          const mediaBox = getMediaBoundingBox(w, stageH);
+          if (mediaBox && offscreenOut.width > 0 && offscreenOut.height > 0) {
+            targetCtx.save();
+            targetCtx.drawImage(offscreenOut, mediaBox.x, mediaBox.y + floatY * 0.35, mediaBox.w, mediaBox.h);
+            targetCtx.restore();
+          }
+        }
+
+        // 4. Tipografia Individualizada (Selo/Tag, Título e Subtítulo)
+        if (isPreview) {
+          Object.keys(textHitBoxes).forEach(k => delete textHitBoxes[k]);
+        }
+
+        if (state.typographyEnabled) {
+          const textOrder = ['tag', 'title', 'subtitle'];
+          textOrder.forEach(id => {
+            const item = state.texts[id];
+            if (!item || !item.visible || !item.content.trim()) return;
+
+            const tx = (item.x / 100) * w;
+            const ty = (item.y / 100) * stageH;
+            const textColor = (id === 'tag' && state.tagTextMatchBg)
+              ? pal.bg
+              : (pal[item.colorRole] || pal.text);
+
+            targetCtx.save();
+            targetCtx.textBaseline = 'middle';
+
+            let box;
+            if (id === 'tag') {
+              const fontSize = Math.max(10, item.size);
+              targetCtx.font = `600 ${fontSize}px "${item.font}", "JetBrains Mono", monospace`;
+              const labelText = item.content.trim();
+              const textW = targetCtx.measureText(labelText).width;
+              const padX = fontSize * 0.95;
+              const padY = fontSize * 0.52;
+              const pillW = textW + padX * 2;
+              const pillH = fontSize + padY * 2;
+
+              let pillX = tx - pillW / 2;
+              if (item.align === 'left') pillX = tx;
+              else if (item.align === 'right') pillX = tx - pillW;
+              const pillY = ty - pillH / 2;
+
+              // Fundo sutil do selo com borda
+              targetCtx.fillStyle = pal.surface;
+              roundRect(targetCtx, pillX, pillY, pillW, pillH, pillH / 2);
+              targetCtx.fill();
+
+              targetCtx.strokeStyle = pal.primary;
+              targetCtx.lineWidth = Math.max(1.5, fontSize * 0.09);
+              roundRect(targetCtx, pillX, pillY, pillW, pillH, pillH / 2);
+              targetCtx.stroke();
+
+              targetCtx.fillStyle = textColor;
+              targetCtx.textAlign = 'center';
+              targetCtx.fillText(labelText, pillX + pillW / 2, ty + fontSize * 0.04);
+
+              box = { x: pillX, y: pillY, w: pillW, h: pillH };
+            } else {
+              const weight = id === 'title' ? 700 : 400;
+              const fontSize = Math.max(12, item.size);
+              targetCtx.font = `${weight} ${fontSize}px "${item.font}", "Inter", sans-serif`;
+              targetCtx.fillStyle = textColor;
+
+              const maxW = id === 'title' ? w * 0.84 : w * 0.72;
+              const lineH = fontSize * (id === 'title' ? 1.12 : 1.38);
+              box = drawWrappedText(targetCtx, item.content.trim(), tx, ty, maxW, lineH, item.align);
+            }
+
+            if (isPreview && box) {
+              const pad = 10;
+              textHitBoxes[id] = {
+                x: box.x - pad,
+                y: box.y - pad,
+                w: box.w + pad * 2,
+                h: box.h + pad * 2
+              };
+
+              if (hoveredTextId === id || draggingTextId === id) {
+                targetCtx.strokeStyle = pal.accent;
+                targetCtx.lineWidth = 2;
+                targetCtx.setLineDash([6, 4]);
+                roundRect(targetCtx, textHitBoxes[id].x, textHitBoxes[id].y, textHitBoxes[id].w, textHitBoxes[id].h, 8);
+                targetCtx.stroke();
+                targetCtx.setLineDash([]);
+              }
+            }
+
+            targetCtx.restore();
+          });
+        }
+
+        // 5. Barra Inferior da Paleta com Códigos HEX (Opcional na Exportação)
+        if (includePaletteBar && barH > 0) {
+          const swW = w / ROLES.length;
+          ROLES.forEach((role, idx) => {
+            const hex = pal[role.key];
+            const sx = idx * swW;
+            targetCtx.fillStyle = hex;
+            targetCtx.fillRect(sx, stageH, swW + 1, barH);
+
+            const lum = ColorEngine.getRelativeLuminance(hex);
+            const labelColor = lum > 0.35 ? '#111113' : '#F4F4F5';
+            targetCtx.fillStyle = labelColor;
+            targetCtx.textAlign = 'left';
+            targetCtx.textBaseline = 'middle';
+
+            const roleFontSize = Math.max(11, Math.round(barH * 0.17));
+            const hexFontSize = Math.max(13, Math.round(barH * 0.24));
+            const padLeft = Math.max(14, swW * 0.08);
+
+            targetCtx.globalAlpha = 0.72;
+            targetCtx.font = `600 ${roleFontSize}px "Inter", sans-serif`;
+            targetCtx.fillText(role.label.toUpperCase(), sx + padLeft, stageH + barH * 0.36);
+
+            targetCtx.globalAlpha = 1;
+            targetCtx.font = `600 ${hexFontSize}px "JetBrains Mono", monospace`;
+            targetCtx.fillText(hex, sx + padLeft, stageH + barH * 0.67);
+          });
+        }
+      }
+
+      function renderLoop() {
+        const animT = state.isRecording ? state.recordAnimTime : 0;
+        const showBar = state.isRecording && state.recordIncludeBar;
+        renderComposition(ctx, mainCanvas.width, mainCanvas.height, animT, showBar, !state.isRecording);
+        requestAnimationFrame(renderLoop);
+      }
+
+      /* =====================================================================
+       * 8. UTILITÁRIOS DE UI (TOAST, CLIPBOARD, SWATCHES, WCAG, DRAG DE TEXTO)
+       * ===================================================================== */
+      let toastTimer = null;
+      function showToast(message) {
+        const el = document.getElementById('toast');
+        el.textContent = message;
+        el.classList.remove('hidden', 'toast-enter');
+        void el.offsetWidth;
+        el.classList.add('toast-enter');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+      }
+
+      function copyToClipboard(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast(`Copiado: ${text}`);
+        } catch {
+          showToast(`Código: ${text}`);
+        }
+        document.body.removeChild(ta);
+      }
+
+      function updateHeaderWcag() {
+        const ratio = ColorEngine.getContrastRatio(state.palette.bg, state.palette.text);
+        const status = ColorEngine.getWcagStatus(ratio);
+        const dot = document.getElementById('headerWcagDot');
+        const ratioEl = document.getElementById('headerWcagRatio');
+        const levelEl = document.getElementById('headerWcagLevel');
+        const badge = document.getElementById('wcagLockBadge');
+
+        dot.className = `w-2 h-2 rounded-full shrink-0 ${status.dot}`;
+        ratioEl.textContent = `${ratio.toFixed(1)}:1`;
+        levelEl.textContent = status.label;
+        levelEl.className = `text-[11px] font-semibold ${status.color}`;
+
+        if (state.ensureWcag) {
+          badge.className = 'ml-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium';
+          badge.textContent = 'AA+';
+        } else {
+          badge.className = 'ml-0.5 text-[10px] px-1.5 py-0.5 rounded bg-studio-elevated text-studio-subtle border border-studio-border font-medium';
+          badge.textContent = 'OFF';
+        }
+      }
+
+      function renderTopSwatches() {
+        const container = document.getElementById('topSwatchesContainer');
+        container.innerHTML = '';
+
+        ROLES.forEach(({ key, label }) => {
+          const hex = state.palette[key];
+          const locked = state.locks[key];
+
+          const chip = document.createElement('div');
+          chip.className = 'flex items-center gap-1.5 px-2 py-1 rounded-lg bg-studio-bg border border-studio-border hover:border-zinc-600 transition-colors';
+
+          // Swatch clicável com color picker nativo
+          const swatchWrap = document.createElement('div');
+          swatchWrap.className = 'relative w-5 h-5 rounded-md border border-white/15 shrink-0 overflow-hidden shadow-inner';
+          swatchWrap.style.backgroundColor = hex;
+          swatchWrap.title = `Alterar cor: ${label}`;
+
+          const colorInput = document.createElement('input');
+          colorInput.type = 'color';
+          colorInput.value = hex;
+          colorInput.className = 'color-input-hidden';
+          colorInput.addEventListener('input', e => {
+            const next = { ...state.palette, [key]: e.target.value.toUpperCase() };
+            commitPalette(next, false);
+          });
+          colorInput.addEventListener('change', e => {
+            const next = { ...state.palette, [key]: e.target.value.toUpperCase() };
+            commitPalette(next, true);
+          });
+          swatchWrap.appendChild(colorInput);
+
+          // Rótulo + HEX editável
+          const infoWrap = document.createElement('div');
+          infoWrap.className = 'flex flex-col leading-none';
+
+          const roleSpan = document.createElement('span');
+          roleSpan.className = 'text-[9px] uppercase tracking-wider text-studio-subtle font-medium';
+          roleSpan.textContent = label;
+
+          const hexInput = document.createElement('input');
+          hexInput.type = 'text';
+          hexInput.value = hex;
+          hexInput.maxLength = 7;
+          hexInput.className = 'w-[60px] bg-transparent font-mono text-[11px] font-medium text-studio-text focus:outline-none uppercase mt-0.5';
+          hexInput.addEventListener('change', e => {
+            const normalized = ColorEngine.normalizeHex(e.target.value);
+            if (normalized) {
+              commitPalette({ ...state.palette, [key]: normalized }, true);
+            } else {
+              e.target.value = state.palette[key];
+              showToast('HEX inválido. Use o formato #RRGGBB.');
+            }
+          });
+          infoWrap.appendChild(roleSpan);
+          infoWrap.appendChild(hexInput);
+
+          // Botão Travar/Destravar
+          const lockBtn = document.createElement('button');
+          lockBtn.type = 'button';
+          lockBtn.title = locked ? `Destravar ${label}` : `Travar ${label}`;
+          lockBtn.className = `p-1 rounded transition-colors ${locked ? 'text-amber-400 bg-amber-400/10' : 'text-studio-subtle hover:text-studio-text'}`;
+          lockBtn.innerHTML = locked
+            ? `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`
+            : `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>`;
+          lockBtn.addEventListener('click', () => {
+            state.locks[key] = !state.locks[key];
+            renderTopSwatches();
+          });
+
+          // Botão Copiar HEX
+          const copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.title = `Copiar ${hex}`;
+          copyBtn.className = 'p-1 rounded text-studio-subtle hover:text-studio-text transition-colors';
+          copyBtn.innerHTML = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+          copyBtn.addEventListener('click', () => copyToClipboard(hex));
+
+          chip.appendChild(swatchWrap);
+          chip.appendChild(infoWrap);
+          chip.appendChild(lockBtn);
+          chip.appendChild(copyBtn);
+          container.appendChild(chip);
+        });
+      }
+
+      function updateAllUI() {
+        renderTopSwatches();
+        updateHeaderWcag();
+        renderTailwindPanel();
+        document.getElementById('btnUndo').disabled = state.historyIndex <= 0;
+        document.getElementById('btnRedo').disabled = state.historyIndex >= state.history.length - 1;
+      }
+
+      function setShapeCount(newCount) {
+        const clamped = ColorEngine.clamp(newCount, 1, 24);
+        state.shapeCount = clamped;
+        document.getElementById('shapeCountVal').textContent = String(clamped);
+        document.getElementById('shapeCountRange').value = String(clamped);
+        generateShapeLayout();
+      }
+
+      function getCanvasPoint(clientX, clientY) {
+        const rect = mainCanvas.getBoundingClientRect();
+        const scaleX = mainCanvas.width / rect.width;
+        const scaleY = mainCanvas.height / rect.height;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      }
+
+      function hitTestText(px, py) {
+        const ids = ['subtitle', 'title', 'tag'];
+        for (const id of ids) {
+          const b = textHitBoxes[id];
+          if (b && px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+            return id;
+          }
+        }
+        return null;
+      }
+
+      function bindCanvasTextDrag() {
+        const startDrag = (clientX, clientY) => {
+          if (state.isRecording) return false;
+          const pt = getCanvasPoint(clientX, clientY);
+          const hit = hitTestText(pt.x, pt.y);
+          if (!hit) return false;
+
+          draggingTextId = hit;
+          state.activeTextId = hit;
+          const item = state.texts[hit];
+          const itemPxX = (item.x / 100) * mainCanvas.width;
+          const itemPxY = (item.y / 100) * mainCanvas.height;
+          dragOffsetX = pt.x - itemPxX;
+          dragOffsetY = pt.y - itemPxY;
+          mainCanvas.style.cursor = 'grabbing';
+          syncTypographyControls();
+          return true;
+        };
+
+        const moveDrag = (clientX, clientY) => {
+          const pt = getCanvasPoint(clientX, clientY);
+          if (draggingTextId) {
+            const item = state.texts[draggingTextId];
+            const nx = ColorEngine.clamp(((pt.x - dragOffsetX) / mainCanvas.width) * 100, 0, 100);
+            const ny = ColorEngine.clamp(((pt.y - dragOffsetY) / mainCanvas.height) * 100, 0, 100);
+            item.x = Math.round(nx * 2) / 2;
+            item.y = Math.round(ny * 2) / 2;
+            syncTypographyControls();
+            return true;
+          }
+          const hit = hitTestText(pt.x, pt.y);
+          hoveredTextId = hit;
+          mainCanvas.style.cursor = hit ? 'grab' : 'default';
+          return false;
+        };
+
+        const endDrag = () => {
+          if (!draggingTextId) return;
+          draggingTextId = null;
+          mainCanvas.style.cursor = hoveredTextId ? 'grab' : 'default';
+        };
+
+        mainCanvas.addEventListener('mousedown', e => {
+          if (startDrag(e.clientX, e.clientY)) e.preventDefault();
+        });
+        window.addEventListener('mousemove', e => {
+          if (draggingTextId || e.target === mainCanvas) moveDrag(e.clientX, e.clientY);
+        });
+        window.addEventListener('mouseup', endDrag);
+        mainCanvas.addEventListener('mouseleave', () => {
+          if (!draggingTextId) {
+            hoveredTextId = null;
+            mainCanvas.style.cursor = 'default';
+          }
+        });
+
+        mainCanvas.addEventListener('touchstart', e => {
+          if (e.touches.length === 1 && startDrag(e.touches[0].clientX, e.touches[0].clientY)) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        window.addEventListener('touchmove', e => {
+          if (draggingTextId && e.touches.length === 1) {
+            e.preventDefault();
+            moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+        window.addEventListener('touchend', endDrag);
+      }
+
+      /* =====================================================================
+       * 9. UPLOAD DE MÍDIA (PNG, JPG, WEBP, MP4, MOV)
+       * ===================================================================== */
+      // Reposiciona o selo acima e o subtítulo abaixo da mídia, mantendo margem segura das bordas
+      function applyMediaTextLayout() {
+        const dim = RATIOS[state.ratio];
+        const mediaBox = getMediaBoundingBox(dim.w, dim.h);
+        if (!mediaBox) return;
+
+        // Desativa o título ao enviar mídia
+        state.texts.title.visible = false;
+
+        // Margem segura mínima das bordas superior e inferior (em % da altura do canvas)
+        const minEdgeMarginPct = Math.max(9, (58 / dim.h) * 100);
+        const mediaTopPct = (mediaBox.y / dim.h) * 100;
+        const mediaBottomPct = ((mediaBox.y + mediaBox.h) / dim.h) * 100;
+
+        // Selo acima da mídia (sem encostar na borda superior, mesmo que sobreponha a mídia)
+        const desiredTagY = mediaTopPct - 5.5;
+        state.texts.tag.y = Math.round(ColorEngine.clamp(desiredTagY, minEdgeMarginPct, 100 - minEdgeMarginPct) * 2) / 2;
+
+        // Subtítulo abaixo da mídia (sem encostar na borda inferior, mesmo que sobreponha a mídia)
+        const desiredSubtitleY = mediaBottomPct + 6.5;
+        state.texts.subtitle.y = Math.round(ColorEngine.clamp(desiredSubtitleY, minEdgeMarginPct, 100 - minEdgeMarginPct) * 2) / 2;
+
+        syncTypographyControls();
+      }
+
+      function clearMedia() {
+        if (state.media.element && state.media.type === 'video') {
+          state.media.element.pause();
+          state.media.element.src = '';
+        }
+        if (state.media.objectUrl) {
+          URL.revokeObjectURL(state.media.objectUrl);
+        }
+        state.media.enabled = true;
+        state.media.type = null;
+        state.media.element = null;
+        state.media.fileName = '';
+        state.media.width = 0;
+        state.media.height = 0;
+        state.media.objectUrl = null;
+        state.media.isPlaying = true;
+
+        // Restaura o título quando a mídia é removida
+        state.texts.title.visible = true;
+
+        document.getElementById('mediaFileInput').value = '';
+        document.getElementById('mediaInfoCard').classList.add('hidden');
+        document.getElementById('videoControls').classList.add('hidden');
+        document.getElementById('mediaActiveDot').classList.add('hidden');
+        document.getElementById('exportVideoHint').textContent =
+          'Sem vídeo enviado: será gerada uma animação suave de showcase com as formas e cores da paleta.';
+        syncMediaEnabledUI();
+        syncTypographyControls();
+        generateShapeLayout();
+      }
+
+      function handleMediaFile(file) {
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        const isVideo = file.type.startsWith('video/') || ext === 'mp4' || ext === 'mov';
+        const isImage = file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+
+        if (!isVideo && !isImage) {
+          showToast('Formato não suportado. Envie PNG, JPG, WebP, MP4 ou MOV.');
+          return;
+        }
+
+        clearMedia();
+        const url = URL.createObjectURL(file);
+
+        if (isImage) {
+          const img = new Image();
+          img.onload = () => {
+            state.media.enabled = true;
+            state.media.type = 'image';
+            state.media.element = img;
+            state.media.fileName = file.name;
+            state.media.width = img.naturalWidth;
+            state.media.height = img.naturalHeight;
+            state.media.objectUrl = url;
+            mediaNeedsReprocess = true;
+
+            document.getElementById('mediaFileName').textContent = file.name;
+            document.getElementById('mediaFileMeta').textContent = `Imagem • ${img.naturalWidth}×${img.naturalHeight}`;
+            document.getElementById('mediaInfoCard').classList.remove('hidden');
+            document.getElementById('videoControls').classList.add('hidden');
+            document.getElementById('mediaActiveDot').classList.remove('hidden');
+
+            syncMediaEnabledUI();
+            generateShapeLayout();
+            applyMediaTextLayout();
+            showToast('Imagem carregada, formas e textos reposicionados!');
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            showToast('Erro ao carregar a imagem.');
+          };
+          img.src = url;
+        } else {
+          const video = document.createElement('video');
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.crossOrigin = 'anonymous';
+          video.onloadedmetadata = () => {
+            state.media.enabled = true;
+            state.media.type = 'video';
+            state.media.element = video;
+            state.media.fileName = file.name;
+            state.media.width = video.videoWidth || 1280;
+            state.media.height = video.videoHeight || 720;
+            state.media.objectUrl = url;
+            state.media.isPlaying = true;
+            mediaNeedsReprocess = true;
+
+            video.play().catch(() => {});
+
+            document.getElementById('mediaFileName').textContent = file.name;
+            document.getElementById('mediaFileMeta').textContent = `Vídeo • ${state.media.width}×${state.media.height}`;
+            document.getElementById('mediaInfoCard').classList.remove('hidden');
+            document.getElementById('videoControls').classList.remove('hidden');
+            document.getElementById('videoPlayIcon').textContent = '⏸';
+            document.getElementById('videoPlayLabel').textContent = 'Pausar Vídeo';
+            document.getElementById('mediaActiveDot').classList.remove('hidden');
+            document.getElementById('exportVideoHint').textContent =
+              'Seu vídeo será gravado em tempo real com as cores personalizadas da paleta.';
+
+            syncMediaEnabledUI();
+            generateShapeLayout();
+            applyMediaTextLayout();
+            showToast('Vídeo carregado, formas e textos reposicionados!');
+          };
+          video.onerror = () => {
+            URL.revokeObjectURL(url);
+            showToast('Não foi possível reproduzir este vídeo no navegador.');
+          };
+          video.src = url;
+        }
+      }
+
+      /* =====================================================================
+       * 10. EXPORTAÇÃO EM FOTO (PNG) E VÍDEO (MP4 / WEBM)
+       * ===================================================================== */
+      function exportPng() {
+        const includeBar = document.getElementById('exportPhotoIncludeBar').checked;
+        const dim = RATIOS[state.ratio];
+        const barExtra = includeBar ? Math.max(88, Math.round(dim.h * 0.12)) : 0;
+
+        const expCanvas = document.createElement('canvas');
+        expCanvas.width = dim.w;
+        expCanvas.height = dim.h + barExtra;
+        const expCtx = expCanvas.getContext('2d');
+
+        renderComposition(expCtx, expCanvas.width, expCanvas.height, 0, includeBar, false);
+
+        const link = document.createElement('a');
+        link.download = `tavares-color-studio-${state.ratio.replace(':', 'x')}.png`;
+        link.href = expCanvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem PNG exportada!');
+      }
+
+      function recordVideo() {
+        if (state.isRecording) return;
+        if (typeof MediaRecorder === 'undefined' || !mainCanvas.captureStream) {
+          showToast('Gravação de vídeo não suportada neste navegador.');
+          return;
+        }
+
+        const durationSec = parseInt(document.getElementById('exportDuration').value, 10) || 3;
+        const fps = parseInt(document.getElementById('exportFps').value, 10) || 24;
+        const includeBar = document.getElementById('exportVideoIncludeBar').checked;
+
+        const mimeCandidates = [
+          'video/mp4;codecs=avc1.42E01E',
+          'video/mp4',
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm'
+        ];
+        const mimeType = mimeCandidates.find(m => MediaRecorder.isTypeSupported(m)) || '';
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+
+        const btn = document.getElementById('btnRecordVideo');
+        const progressWrap = document.getElementById('videoProgressWrap');
+        const progressBar = document.getElementById('videoProgressBar');
+        const progressPct = document.getElementById('videoProgressPct');
+        const pill = document.getElementById('recordingPill');
+
+        try {
+          const stream = mainCanvas.captureStream(fps);
+          const recorder = mimeType
+            ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6000000 })
+            : new MediaRecorder(stream);
+
+          const chunks = [];
+          recorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            state.isRecording = false;
+            state.recordAnimTime = 0;
+            state.recordIncludeBar = false;
+            btn.disabled = false;
+            pill.classList.add('hidden');
+            progressWrap.classList.add('hidden');
+            progressBar.style.width = '0%';
+
+            const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tavares-color-studio-${state.ratio.replace(':', 'x')}.${ext}`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showToast(`Vídeo ${ext.toUpperCase()} exportado!`);
+          };
+
+          state.isRecording = true;
+          state.recordIncludeBar = includeBar;
+          state.recordAnimTime = 0;
+          btn.disabled = true;
+          pill.classList.remove('hidden');
+          progressWrap.classList.remove('hidden');
+
+          if (state.media.type === 'video' && state.media.element) {
+            state.media.element.currentTime = 0;
+            state.media.element.play().catch(() => {});
+          }
+
+          recorder.start();
+          const startTime = performance.now();
+          const totalMs = durationSec * 1000;
+
+          const tick = now => {
+            if (!state.isRecording) return;
+            const elapsed = now - startTime;
+            const pct = Math.min(1, elapsed / totalMs);
+            state.recordAnimTime = pct;
+            const pctRound = Math.round(pct * 100);
+            progressBar.style.width = `${pctRound}%`;
+            progressPct.textContent = `${pctRound}%`;
+
+            if (elapsed >= totalMs) {
+              recorder.stop();
+            } else {
+              requestAnimationFrame(tick);
+            }
+          };
+          requestAnimationFrame(tick);
+        } catch (err) {
+          state.isRecording = false;
+          btn.disabled = false;
+          pill.classList.add('hidden');
+          progressWrap.classList.add('hidden');
+          showToast('Erro ao iniciar gravação de vídeo.');
+        }
+      }
+
+      /* =====================================================================
+       * 11. EVENTOS E INICIALIZAÇÃO
+       * ===================================================================== */
+      function bindEvents() {
+        // Recolher e reabrir a coluna lateral de parâmetros (Modo Foco)
+        const sidebar = document.getElementById('paramsSidebar');
+        const btnCollapse = document.getElementById('btnCollapseSidebar');
+        const btnExpand = document.getElementById('btnExpandSidebar');
+
+        btnCollapse.addEventListener('click', () => {
+          sidebar.classList.add('hidden');
+          btnExpand.classList.remove('hidden');
+          fitCanvasToStage();
+        });
+
+        btnExpand.addEventListener('click', () => {
+          sidebar.classList.remove('hidden');
+          btnExpand.classList.add('hidden');
+          fitCanvasToStage();
+        });
+
+        // Abas da Barra Lateral (Formas, Tipografia, Mídia)
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => {
+              const active = b.dataset.tab === target;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('text-studio-text', active);
+              b.classList.toggle('text-studio-muted', !active);
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+              panel.classList.toggle('hidden', panel.id !== `tab-${target}`);
+            });
+          });
+        });
+
+        // Seletor de 6 Proporções no Canto Esquerdo Superior
+        document.querySelectorAll('.ratio-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.ratio = btn.dataset.ratio;
+            document.querySelectorAll('.ratio-btn').forEach(b => {
+              const active = b.dataset.ratio === state.ratio;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('text-studio-text', active);
+              b.classList.toggle('text-studio-muted', !active);
+            });
+            updateCanvasResolution();
+          });
+        });
+
+        // Desfazer / Refazer
+        document.getElementById('btnUndo').addEventListener('click', undo);
+        document.getElementById('btnRedo').addEventListener('click', redo);
+
+        // Harmonia e Randomizadores
+        document.getElementById('harmonySelect').addEventListener('change', e => {
+          state.harmony = e.target.value;
+          generateHarmonyPalette('aggressive');
+        });
+        document.getElementById('btnRandomMild').addEventListener('click', () => generateHarmonyPalette('mild'));
+        document.getElementById('btnRandomAggressive').addEventListener('click', () => generateHarmonyPalette('aggressive'));
+        document.getElementById('btnRandomHarmony').addEventListener('click', () => generateHarmonyPalette('harmony'));
+        document.getElementById('btnInvertPolarity').addEventListener('click', invertPolarity);
+        document.getElementById('btnRotateRoles').addEventListener('click', rotateRoles);
+
+        // Toggle Proteção WCAG AA+
+        document.getElementById('btnToggleWcag').addEventListener('click', () => {
+          state.ensureWcag = !state.ensureWcag;
+          if (state.ensureWcag) {
+            commitPalette(applyWcagRules(state.palette), true);
+            showToast('Proteção de legibilidade WCAG AA+ ativada.');
+          } else {
+            updateHeaderWcag();
+            showToast('Proteção de legibilidade WCAG AA+ desativada.');
+          }
+        });
+
+        // Formas Geométricas: Ativar/Desativar, Posição, Quantidade, Estilo e Escala
+        document.getElementById('shapesEnabledToggle').addEventListener('change', e => {
+          state.shapesEnabled = e.target.checked;
+          updateToggleBadge('shapesEnabledBadge', state.shapesEnabled);
+        });
+
+        document.getElementById('btnRandomShapePos').addEventListener('click', () => {
+          generateShapeLayout();
+        });
+        document.getElementById('btnShapeCountDec').addEventListener('click', () => setShapeCount(state.shapeCount - 1));
+        document.getElementById('btnShapeCountInc').addEventListener('click', () => setShapeCount(state.shapeCount + 1));
+        document.getElementById('shapeCountRange').addEventListener('input', e => {
+          setShapeCount(parseInt(e.target.value, 10));
+        });
+
+        document.querySelectorAll('.shape-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.shape = btn.dataset.shape;
+            document.querySelectorAll('.shape-btn').forEach(b => {
+              const active = b.dataset.shape === state.shape;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('border-zinc-500', active);
+              b.classList.toggle('text-studio-text', active);
+              b.classList.toggle('bg-studio-bg', !active);
+              b.classList.toggle('border-studio-border', !active);
+              b.classList.toggle('text-studio-muted', !active);
+            });
+          });
+        });
+
+        document.getElementById('shapeScaleRange').addEventListener('input', e => {
+          state.shapeScale = parseInt(e.target.value, 10);
+          document.getElementById('shapeScaleVal').textContent = `${state.shapeScale}%`;
+          if (state.media.element) generateShapeLayout();
+        });
+
+        // Tipografia Individualizada + Google Fonts
+        document.getElementById('typographyEnabledToggle').addEventListener('change', e => {
+          state.typographyEnabled = e.target.checked;
+          updateToggleBadge('typographyEnabledBadge', state.typographyEnabled);
+        });
+
+        document.querySelectorAll('.quick-text-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const tid = btn.dataset.quicktext;
+            state.texts[tid].visible = !state.texts[tid].visible;
+            if (state.texts[tid].visible && !state.typographyEnabled) {
+              state.typographyEnabled = true;
+              document.getElementById('typographyEnabledToggle').checked = true;
+              updateToggleBadge('typographyEnabledBadge', true);
+            }
+            syncTypographyControls();
+          });
+        });
+
+        document.querySelectorAll('.texttab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.activeTextId = btn.dataset.texttab;
+            syncTypographyControls();
+          });
+        });
+
+        document.getElementById('textVisibleToggle').addEventListener('change', e => {
+          state.texts[state.activeTextId].visible = e.target.checked;
+          if (e.target.checked && !state.typographyEnabled) {
+            state.typographyEnabled = true;
+            document.getElementById('typographyEnabledToggle').checked = true;
+            updateToggleBadge('typographyEnabledBadge', true);
+          }
+          syncTypographyControls();
+        });
+
+        document.getElementById('btnResetTextPos').addEventListener('click', () => {
+          const id = state.activeTextId;
+          state.texts[id].x = DEFAULT_TEXTS[id].x;
+          state.texts[id].y = DEFAULT_TEXTS[id].y;
+          state.texts[id].align = 'center';
+          syncTypographyControls();
+        });
+
+        document.getElementById('activeTextInput').addEventListener('input', e => {
+          state.texts[state.activeTextId].content = e.target.value;
+        });
+
+        document.getElementById('activeTextFont').addEventListener('change', async e => {
+          const font = e.target.value;
+          state.texts[state.activeTextId].font = font;
+          await ensureGoogleFontLoaded(font, false);
+        });
+
+        const loadCustomFont = async () => {
+          const input = document.getElementById('customGoogleFontInput');
+          const fontName = input.value.trim();
+          if (!fontName) return;
+          const loaded = await ensureGoogleFontLoaded(fontName, true);
+          if (loaded) {
+            state.texts[state.activeTextId].font = loaded;
+            input.value = '';
+            syncTypographyControls();
+          }
+        };
+
+        document.getElementById('btnLoadGoogleFont').addEventListener('click', loadCustomFont);
+        document.getElementById('customGoogleFontInput').addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            loadCustomFont();
+          }
+        });
+
+        document.getElementById('activeTextSizeRange').addEventListener('input', e => {
+          const val = parseInt(e.target.value, 10);
+          state.texts[state.activeTextId].size = val;
+          document.getElementById('activeTextSizeVal').textContent = `${val} px`;
+        });
+
+        document.querySelectorAll('.align-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.texts[state.activeTextId].align = btn.dataset.align;
+            syncTypographyControls();
+          });
+        });
+
+        document.getElementById('activeTextColorRole').addEventListener('change', e => {
+          state.texts[state.activeTextId].colorRole = e.target.value;
+          if (state.activeTextId === 'tag') state.tagTextMatchBg = false;
+        });
+
+        document.getElementById('activeTextPosXRange').addEventListener('input', e => {
+          const val = parseFloat(e.target.value);
+          state.texts[state.activeTextId].x = val;
+          document.getElementById('activeTextPosXVal').textContent = `${Math.round(val)}%`;
+        });
+
+        document.getElementById('activeTextPosYRange').addEventListener('input', e => {
+          const val = parseFloat(e.target.value);
+          state.texts[state.activeTextId].y = val;
+          document.getElementById('activeTextPosYVal').textContent = `${Math.round(val)}%`;
+        });
+
+        // Mídia: Ativar/Desativar, Upload, Modos, Silhueta e Sliders
+        document.getElementById('mediaEnabledToggle').addEventListener('change', e => {
+          state.media.enabled = e.target.checked;
+          if (state.media.element) {
+            if (state.media.enabled) {
+              state.texts.title.visible = false;
+              applyMediaTextLayout();
+              if (state.media.type === 'video' && state.media.isPlaying) {
+                state.media.element.play().catch(() => {});
+              }
+            } else {
+              state.texts.title.visible = true;
+              if (state.media.type === 'video') {
+                state.media.element.pause();
+              }
+            }
+            generateShapeLayout();
+            syncTypographyControls();
+          }
+          syncMediaEnabledUI();
+        });
+
+        const dropzone = document.getElementById('mediaDropzone');
+        const fileInput = document.getElementById('mediaFileInput');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => {
+          if (e.target.files && e.target.files[0]) {
+            handleMediaFile(e.target.files[0]);
+          }
+        });
+
+        dropzone.addEventListener('dragover', e => {
+          e.preventDefault();
+          dropzone.classList.add('dropzone-active');
+        });
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('dropzone-active');
+        });
+        dropzone.addEventListener('drop', e => {
+          e.preventDefault();
+          dropzone.classList.remove('dropzone-active');
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleMediaFile(e.dataTransfer.files[0]);
+          }
+        });
+
+        document.getElementById('btnRemoveMedia').addEventListener('click', clearMedia);
+
+        document.getElementById('btnVideoPlayPause').addEventListener('click', () => {
+          if (state.media.type !== 'video' || !state.media.element) return;
+          if (state.media.isPlaying) {
+            state.media.element.pause();
+            state.media.isPlaying = false;
+            document.getElementById('videoPlayIcon').textContent = '▶';
+            document.getElementById('videoPlayLabel').textContent = 'Reproduzir Vídeo';
+          } else {
+            state.media.element.play().catch(() => {});
+            state.media.isPlaying = true;
+            document.getElementById('videoPlayIcon').textContent = '⏸';
+            document.getElementById('videoPlayLabel').textContent = 'Pausar Vídeo';
+          }
+        });
+
+        document.querySelectorAll('.mediamode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.media.mode = btn.dataset.mode;
+            document.querySelectorAll('.mediamode-btn').forEach(b => {
+              const active = b.dataset.mode === state.media.mode;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('border-zinc-500', active);
+              b.classList.toggle('bg-studio-bg', !active);
+              b.classList.toggle('border-studio-border', !active);
+            });
+            document.getElementById('silhouetteColorWrap').classList.toggle('hidden', state.media.mode !== 'silhouette');
+            mediaNeedsReprocess = true;
+          });
+        });
+
+        document.querySelectorAll('.sil-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.media.silhouetteRole = btn.dataset.sil;
+            document.querySelectorAll('.sil-btn').forEach(b => {
+              const active = b.dataset.sil === state.media.silhouetteRole;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('text-studio-text', active);
+              b.classList.toggle('font-medium', active);
+              b.classList.toggle('text-studio-muted', !active);
+            });
+            mediaNeedsReprocess = true;
+          });
+        });
+
+        document.getElementById('mediaIntensityRange').addEventListener('input', e => {
+          state.media.intensity = parseInt(e.target.value, 10);
+          document.getElementById('mediaIntensityVal').textContent = `${state.media.intensity}%`;
+          mediaNeedsReprocess = true;
+        });
+
+        document.getElementById('mediaScaleRange').addEventListener('input', e => {
+          state.media.scale = parseInt(e.target.value, 10);
+          document.getElementById('mediaScaleVal').textContent = `${state.media.scale}%`;
+          if (state.media.enabled && state.media.element) {
+            generateShapeLayout();
+            applyMediaTextLayout();
+          }
+        });
+
+        // Aba Tailwind CSS Color Generator
+        const addBaseHexesFromInput = () => {
+          const input = document.getElementById('twBaseHexInput');
+          const parsed = parseHexList(input.value);
+          if (parsed.length === 0) {
+            showToast('Digite ao menos um HEX válido (ex: #5B6CFF).');
+            return;
+          }
+          parsed.forEach(hex => {
+            if (!state.tailwind.customHexes.includes(hex)) {
+              state.tailwind.customHexes.push(hex);
+            }
+          });
+          state.tailwind.source = 'custom';
+          state.tailwind.activeCustomIndex = state.tailwind.customHexes.indexOf(parsed[parsed.length - 1]);
+          input.value = '';
+          renderTailwindPanel();
+          showToast(parsed.length > 1 ? `${parsed.length} cores adicionadas na Base!` : `Cor ${parsed[0]} adicionada na Base!`);
+        };
+
+        document.getElementById('btnAddTwBaseHex').addEventListener('click', addBaseHexesFromInput);
+        document.getElementById('twBaseHexInput').addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            addBaseHexesFromInput();
+          }
+        });
+        document.getElementById('twBaseHexInput').addEventListener('input', e => {
+          const parsed = parseHexList(e.target.value);
+          if (parsed.length === 1 && e.target.value.trim().length >= 6) {
+            const hex = parsed[0];
+            if (!state.tailwind.customHexes.includes(hex)) {
+              state.tailwind.customHexes.push(hex);
+            }
+            state.tailwind.source = 'custom';
+            state.tailwind.activeCustomIndex = state.tailwind.customHexes.indexOf(hex);
+            renderTailwindPanel();
+          }
+        });
+
+        document.getElementById('twBaseColorPicker').addEventListener('input', e => {
+          const hex = e.target.value.toUpperCase();
+          document.getElementById('twBaseHexInput').value = hex;
+          if (state.tailwind.source === 'custom' && state.tailwind.customHexes.length > 0) {
+            state.tailwind.customHexes[state.tailwind.activeCustomIndex] = hex;
+          } else {
+            state.tailwind.customHexes.push(hex);
+            state.tailwind.source = 'custom';
+            state.tailwind.activeCustomIndex = state.tailwind.customHexes.length - 1;
+          }
+          renderTailwindPanel();
+        });
+
+        document.getElementById('btnApplyTwToPalette').addEventListener('click', applyTailwindToPalette);
+
+        document.querySelectorAll('.tw-role-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.tailwind.source = 'palette';
+            state.tailwind.role = btn.dataset.twrole;
+            renderTailwindPanel();
+          });
+        });
+
+        document.getElementById('twTokenNameInput').addEventListener('input', e => {
+          state.tailwind.tokenName = e.target.value;
+          renderTailwindPanel();
+        });
+
+        document.getElementById('twLockExactToggle').addEventListener('change', e => {
+          state.tailwind.lockExact = e.target.checked;
+          renderTailwindPanel();
+        });
+
+        document.getElementById('twFormatSelect').addEventListener('change', e => {
+          state.tailwind.format = e.target.value;
+          renderTailwindPanel();
+        });
+
+        document.getElementById('twScopeSelect').addEventListener('change', e => {
+          state.tailwind.scope = e.target.value;
+          renderTailwindPanel();
+        });
+
+        document.getElementById('btnCopyTwCode').addEventListener('click', () => {
+          copyToClipboard(buildTailwindSnippet(state.tailwind.format, state.tailwind.scope));
+        });
+
+        document.getElementById('btnDownloadTwCode').addEventListener('click', () => {
+          downloadTailwindFile(state.tailwind.format, state.tailwind.scope);
+        });
+
+        // Modal de Exportação
+        const exportModal = document.getElementById('exportModal');
+        document.getElementById('btnOpenExport').addEventListener('click', () => {
+          renderTailwindPanel();
+          exportModal.classList.remove('hidden');
+        });
+        document.getElementById('btnCloseExport').addEventListener('click', () => {
+          exportModal.classList.add('hidden');
+        });
+        exportModal.addEventListener('click', e => {
+          if (e.target === exportModal) exportModal.classList.add('hidden');
+        });
+
+        document.querySelectorAll('.export-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.dataset.exporttab;
+            document.querySelectorAll('.export-tab-btn').forEach(b => {
+              const active = b.dataset.exporttab === target;
+              b.classList.toggle('bg-studio-elevated', active);
+              b.classList.toggle('text-studio-text', active);
+              b.classList.toggle('text-studio-muted', !active);
+            });
+            document.getElementById('export-panel-photo').classList.toggle('hidden', target !== 'photo');
+            document.getElementById('export-panel-video').classList.toggle('hidden', target !== 'video');
+            document.getElementById('export-panel-tailwind').classList.toggle('hidden', target !== 'tailwind');
+            if (target === 'tailwind') renderTailwindPanel();
+          });
+        });
+
+        document.getElementById('exportTwFormat').addEventListener('change', renderTailwindPanel);
+        document.getElementById('exportTwScope').addEventListener('change', renderTailwindPanel);
+        document.getElementById('btnExportCopyTw').addEventListener('click', () => {
+          const fmt = document.getElementById('exportTwFormat').value;
+          const scope = document.getElementById('exportTwScope').value;
+          copyToClipboard(buildTailwindSnippet(fmt, scope));
+        });
+        document.getElementById('btnExportDownloadTw').addEventListener('click', () => {
+          const fmt = document.getElementById('exportTwFormat').value;
+          const scope = document.getElementById('exportTwScope').value;
+          downloadTailwindFile(fmt, scope);
+        });
+
+        document.getElementById('btnDownloadPng').addEventListener('click', exportPng);
+        document.getElementById('btnRecordVideo').addEventListener('click', recordVideo);
+
+        // Atalhos de Teclado e Redimensionamento
+        window.addEventListener('keydown', e => {
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+          if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+          if (e.code === 'Space') {
+            e.preventDefault();
+            generateHarmonyPalette(e.shiftKey ? 'aggressive' : 'mild');
+          } else if (e.key === 'h' || e.key === 'H') {
+            e.preventDefault();
+            generateHarmonyPalette('harmony');
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            e.shiftKey ? redo() : undo();
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redo();
+          } else if (e.key === 'Escape') {
+            exportModal.classList.add('hidden');
+          }
+        });
+
+        window.addEventListener('resize', fitCanvasToStage);
+      }
+
+      function init() {
+        try {
+          bindEvents();
+          bindCanvasTextDrag();
+          commitPalette(state.palette, true);
+          updateCanvasResolution();
+          syncTypographyControls();
+          syncMediaEnabledUI();
+          updateToggleBadge('shapesEnabledBadge', state.shapesEnabled);
+          updateToggleBadge('typographyEnabledBadge', state.typographyEnabled);
+
+          if (typeof ResizeObserver !== 'undefined' && stageContainer) {
+            new ResizeObserver(() => fitCanvasToStage()).observe(stageContainer);
+          }
+
+          window.addEventListener('load', () => {
+            fitCanvasToStage();
+            updateCanvasResolution();
+          });
+          setTimeout(fitCanvasToStage, 150);
+
+          requestAnimationFrame(renderLoop);
+        } catch (err) {
+          console.error('Erro ao inicializar Tavares Color Studio:', err);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
