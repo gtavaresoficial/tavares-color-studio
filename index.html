@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tavares Color Studio</title>
+  <title>Tavares Color Studio — Laboratório de Paletas & Contraste</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' rx='6' fill='%23111113'/%3E%3Ccircle cx='9.5' cy='12' r='4.5' fill='%23F4F4F5'/%3E%3Ccircle cx='14.5' cy='12' r='4.5' stroke='%23A1A1AA' stroke-width='1.75'/%3E%3C/svg%3E" />
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -733,15 +733,15 @@
             <span>Aplicar na Paleta</span>
           </button>
 
-          <!-- Seletor de Cor da Paleta Atual (Movido para baixo da Escala Gerada) -->
+          <!-- Seletor de Cor da Paleta Atual (Apenas quadrados com as cores atuais) -->
           <div class="space-y-2 pt-1">
             <span class="block text-xs font-medium text-studio-muted uppercase tracking-wider">PALETA ATUAL</span>
-            <div class="grid grid-cols-5 gap-1" id="twRoleSelector">
-              <button data-twrole="bg" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Fundo</button>
-              <button data-twrole="surface" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Superf.</button>
-              <button data-twrole="primary" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-elevated border-zinc-500 text-studio-text truncate">Primária</button>
-              <button data-twrole="accent" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Destaque</button>
-              <button data-twrole="text" type="button" class="tw-role-btn py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-colors bg-studio-bg border-studio-border text-studio-muted hover:text-studio-text truncate">Texto</button>
+            <div class="grid grid-cols-5 gap-2" id="twRoleSelector">
+              <button data-twrole="bg" type="button" title="Fundo" aria-label="Fundo" class="tw-role-btn aspect-square w-full rounded-lg border border-white/15 shadow-inner transition-all hover:scale-105 focus:outline-none"></button>
+              <button data-twrole="surface" type="button" title="Superfície" aria-label="Superfície" class="tw-role-btn aspect-square w-full rounded-lg border border-white/15 shadow-inner transition-all hover:scale-105 focus:outline-none"></button>
+              <button data-twrole="primary" type="button" title="Primária" aria-label="Primária" class="tw-role-btn aspect-square w-full rounded-lg border border-white/15 shadow-inner transition-all hover:scale-105 focus:outline-none"></button>
+              <button data-twrole="accent" type="button" title="Destaque" aria-label="Destaque" class="tw-role-btn aspect-square w-full rounded-lg border border-white/15 shadow-inner transition-all hover:scale-105 focus:outline-none"></button>
+              <button data-twrole="text" type="button" title="Texto" aria-label="Texto" class="tw-role-btn aspect-square w-full rounded-lg border border-white/15 shadow-inner transition-all hover:scale-105 focus:outline-none"></button>
             </div>
           </div>
 
@@ -1426,21 +1426,21 @@
 
         const baseHex = getActiveTailwindBaseHex();
 
-        // Sincroniza o picker de cor da Base
-        const pickerWrap = document.getElementById('twBasePickerWrap');
-        const pickerInput = document.getElementById('twBaseColorPicker');
-        if (pickerWrap) pickerWrap.style.backgroundColor = baseHex;
-        if (pickerInput) pickerInput.value = baseHex;
-
-        // Sincroniza destaque dos botões da seção PALETA ATUAL
+        // Sincroniza cor e destaque dos quadrados da seção PALETA ATUAL
         document.querySelectorAll('.tw-role-btn').forEach(b => {
-          const active = state.tailwind.source === 'palette' && b.dataset.twrole === state.tailwind.role;
-          b.classList.toggle('bg-studio-elevated', active);
-          b.classList.toggle('border-zinc-500', active);
-          b.classList.toggle('text-studio-text', active);
-          b.classList.toggle('bg-studio-bg', !active);
-          b.classList.toggle('border-studio-border', !active);
-          b.classList.toggle('text-studio-muted', !active);
+          const roleKey = b.dataset.twrole;
+          const hex = state.palette[roleKey];
+          const roleMeta = ROLES.find(r => r.key === roleKey);
+          const active = state.tailwind.source === 'palette' && roleKey === state.tailwind.role;
+
+          b.style.backgroundColor = hex;
+          b.title = roleMeta ? `${roleMeta.label} (${hex})` : hex;
+          b.classList.toggle('ring-2', active);
+          b.classList.toggle('ring-studio-text', active);
+          b.classList.toggle('ring-offset-2', active);
+          b.classList.toggle('ring-offset-studio-panel', active);
+          b.classList.toggle('border-white/70', active);
+          b.classList.toggle('border-white/15', !active);
         });
 
         // Renderiza chips de HEX personalizados da seção Base
