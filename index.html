@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tavares Color Studio — Laboratório de Paletas & Contraste</title>
+  <title>Tavares Color Studio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' rx='6' fill='%23111113'/%3E%3Ccircle cx='9.5' cy='12' r='4.5' fill='%23F4F4F5'/%3E%3Ccircle cx='14.5' cy='12' r='4.5' stroke='%23A1A1AA' stroke-width='1.75'/%3E%3C/svg%3E" />
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -298,7 +298,7 @@
         </button>
       </div>
 
-      <!-- Conteúdo das Abas -->
+      <!-- Conteúdo Rolável das Abas -->
       <div class="flex-1 overflow-y-auto p-4 space-y-5">
 
         <!-- ===== ABA 1: FORMAS GEOMÉTRICAS ===== -->
@@ -314,6 +314,42 @@
             </div>
             <span id="shapesEnabledBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">ON</span>
           </label>
+
+          <!-- Ativar / Desativar Animação Suave das Formas + Sliders -->
+          <div class="p-3 rounded-xl bg-studio-bg border border-studio-border space-y-3">
+            <label for="shapesAnimatedToggle" class="flex items-center justify-between gap-2 cursor-pointer select-none">
+              <div class="flex items-center gap-2.5">
+                <span class="relative inline-flex items-center shrink-0">
+                  <input id="shapesAnimatedToggle" type="checkbox" checked class="sr-only peer" />
+                  <span class="w-9 h-5 bg-studio-border rounded-full peer peer-checked:bg-studio-text transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-studio-bg after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></span>
+                </span>
+                <div>
+                  <span class="block text-xs font-medium text-studio-text">Animação</span>
+                  <span class="block text-[10px] text-studio-subtle">Movimento leve e individual</span>
+                </div>
+              </div>
+              <span id="shapesAnimatedBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">ON</span>
+            </label>
+
+            <!-- Sliders de Velocidade e Intensidade da Animação -->
+            <div id="shapeAnimControls" class="space-y-3 pt-2.5 border-t border-studio-border transition-opacity">
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="text-studio-muted">Velocidade</span>
+                  <span id="shapeAnimSpeedVal" class="font-mono text-studio-text">100%</span>
+                </div>
+                <input id="shapeAnimSpeedRange" type="range" min="20" max="250" step="5" value="100" />
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="text-studio-muted">Intensidade</span>
+                  <span id="shapeAnimIntensityVal" class="font-mono text-studio-text">100%</span>
+                </div>
+                <input id="shapeAnimIntensityRange" type="range" min="10" max="250" step="5" value="100" />
+              </div>
+            </div>
+          </div>
 
           <!-- Botão Principal: Randomizar Posição -->
           <div class="space-y-2">
@@ -435,7 +471,7 @@
           <div class="space-y-1.5">
             <label for="activeTextInput" class="block text-[11px] font-medium text-studio-muted uppercase tracking-wider">Conteúdo</label>
             <textarea id="activeTextInput" rows="2" maxlength="140"
-              class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-sm text-studio-text focus:outline-none focus:border-zinc-500 resize-none">CONTRAST PALETE</textarea>
+              class="w-full bg-studio-bg border border-studio-border rounded-lg px-3 py-2 text-sm text-studio-text focus:outline-none focus:border-zinc-500 resize-none">CONTRAST PALETTE</textarea>
           </div>
 
           <!-- Seletor de Fonte (Google Fonts) + Carregar Fonte Personalizada -->
@@ -1128,7 +1164,7 @@
         title: {
           label: 'Título',
           visible: true,
-          content: 'CONTRAST PALETE',
+          content: 'CONTRAST PALETTE',
           font: 'Space Grotesk',
           size: 72,
           align: 'center',
@@ -1173,6 +1209,9 @@
 
         // Formas Geométricas Dinâmicas (Padrão: 15 formas, escala 50%)
         shapesEnabled: true,
+        shapesAnimated: true,
+        shapeAnimSpeed: 100,
+        shapeAnimIntensity: 100,
         shape: 'bauhaus',
         shapeCount: 15,
         shapeScale: 50,
@@ -1716,6 +1755,16 @@
           const rotation = randRange(0, Math.PI * 2);
           const strokeOnly = Math.random() < 0.22;
           const phase = randRange(0, Math.PI * 2);
+          const phaseY = randRange(0, Math.PI * 2);
+          const rotPhase = randRange(0, Math.PI * 2);
+          const speedX = randRange(0.28, 0.62);
+          const speedY = randRange(0.24, 0.58);
+          const rotSpeed = randRange(0.2, 0.48);
+          const ampX = randRange(0.008, 0.02);
+          const ampY = randRange(0.008, 0.02);
+          const rotAmp = randRange(0.05, 0.14);
+          const dirX = Math.random() > 0.5 ? 1 : -1;
+          const dirY = Math.random() > 0.5 ? 1 : -1;
 
           let px = w * 0.5;
           let py = h * 0.5;
@@ -1828,7 +1877,17 @@
             kind,
             role,
             strokeOnly,
-            phase
+            phase,
+            phaseY,
+            rotPhase,
+            speedX,
+            speedY,
+            rotSpeed,
+            ampX,
+            ampY,
+            rotAmp,
+            dirX,
+            dirY
           });
         }
 
@@ -2256,7 +2315,13 @@
         const barH = includePaletteBar ? Math.max(76, Math.round(h * 0.12)) : 0;
         const stageH = h - barH;
         const minDim = Math.min(w, stageH);
-        const floatY = animT > 0 ? Math.sin(animT * Math.PI * 2) * (minDim * 0.015) : 0;
+        const animateShapes = state.shapesAnimated && animT > 0;
+        const isLoopAnim = state.isRecording;
+        const intensityMult = state.shapeAnimIntensity / 100;
+        const loopCycles = Math.max(1, Math.round(state.shapeAnimSpeed / 100));
+        const floatY = animateShapes
+          ? Math.sin(isLoopAnim ? animT * Math.PI * 2 * loopCycles : animT * 0.75) * (minDim * 0.012) * intensityMult
+          : 0;
 
         // 1. Fundo
         targetCtx.fillStyle = pal.bg;
@@ -2326,12 +2391,27 @@
             // Formas dinâmicas distribuídas (Bauhaus, Círculos, Quadrados, Triângulos, Linhas)
             const scaleFactor = state.shapeScale / 100;
             state.shapeItems.forEach(item => {
-              const driftX = animT > 0 ? Math.cos(animT * Math.PI * 2 + item.phase) * (minDim * 0.012) : 0;
-              const driftY = animT > 0 ? Math.sin(animT * Math.PI * 2 + item.phase) * (minDim * 0.012) : 0;
+              let driftX = 0;
+              let driftY = 0;
+              let rotOffset = 0;
+
+              if (animateShapes) {
+                if (isLoopAnim) {
+                  const loopAngle = animT * Math.PI * 2 * loopCycles;
+                  driftX = Math.sin(loopAngle + item.phase) * (minDim * item.ampX * intensityMult) * item.dirX;
+                  driftY = Math.cos(loopAngle + item.phaseY) * (minDim * item.ampY * intensityMult) * item.dirY;
+                  rotOffset = Math.sin(loopAngle + item.rotPhase) * (item.rotAmp * intensityMult);
+                } else {
+                  driftX = Math.sin(animT * item.speedX + item.phase) * (minDim * item.ampX * intensityMult) * item.dirX;
+                  driftY = Math.cos(animT * item.speedY + item.phaseY) * (minDim * item.ampY * intensityMult) * item.dirY;
+                  rotOffset = Math.sin(animT * item.rotSpeed + item.rotPhase) * (item.rotAmp * intensityMult);
+                }
+              }
+
               const x = item.nx * w + driftX;
               const y = item.ny * stageH + driftY;
               const r = Math.max(6, item.sizeNorm * minDim * scaleFactor * item.sizeMult);
-              const rot = item.rotation + (animT > 0 ? Math.sin(animT * Math.PI * 2 + item.phase) * 0.18 : 0);
+              const rot = item.rotation + rotOffset;
               const color = pal[item.role] || pal.primary;
 
               let drawKind = item.kind;
@@ -2465,17 +2545,30 @@
 
             targetCtx.globalAlpha = 0.72;
             targetCtx.font = `600 ${roleFontSize}px "Inter", sans-serif`;
-            targetCtx.fillText(role.label.toUpperCase(), sx + padLeft, stageH + barH * 0.36);
+            targetCtx.fillText(role.label.toUpperCase(), sx + padLeft, stageH + barH * 0.34);
 
             targetCtx.globalAlpha = 1;
-            targetCtx.font = `600 ${hexFontSize}px "JetBrains Mono", monospace`;
-            targetCtx.fillText(hex, sx + padLeft, stageH + barH * 0.67);
+            targetCtx.font = `700 ${hexFontSize}px "JetBrains Mono", monospace`;
+            targetCtx.fillText(hex, sx + padLeft, stageH + barH * 0.66);
           });
         }
       }
 
-      function renderLoop() {
-        const animT = state.isRecording ? state.recordAnimTime : 0;
+      let lastFrameTime = 0;
+      let liveAnimTime = 0;
+
+      function renderLoop(now = 0) {
+        if (!lastFrameTime) lastFrameTime = now;
+        const dt = Math.min(0.1, Math.max(0, (now - lastFrameTime) * 0.001));
+        lastFrameTime = now;
+
+        if (!state.isRecording && state.shapesAnimated) {
+          liveAnimTime += dt * (state.shapeAnimSpeed / 100);
+        }
+
+        const animT = state.isRecording
+          ? (state.shapesAnimated ? state.recordAnimTime : 0)
+          : (state.shapesAnimated ? liveAnimTime : 0);
         const showBar = state.isRecording && state.recordIncludeBar;
         renderComposition(ctx, mainCanvas.width, mainCanvas.height, animT, showBar, !state.isRecording);
         requestAnimationFrame(renderLoop);
@@ -3061,14 +3154,34 @@
             showToast('Proteção de legibilidade WCAG AA+ ativada.');
           } else {
             updateHeaderWcag();
-            showToast('Proteção de legibilidade WCAG AA+ desativada.');
+            showToast('Proteção automática de legibilidade desativada.');
           }
         });
 
-        // Formas Geométricas: Ativar/Desativar, Posição, Quantidade, Estilo e Escala
+        // Formas Geométricas: Ativar/Desativar, Animação, Posição, Quantidade, Estilo e Escala
         document.getElementById('shapesEnabledToggle').addEventListener('change', e => {
           state.shapesEnabled = e.target.checked;
           updateToggleBadge('shapesEnabledBadge', state.shapesEnabled);
+        });
+
+        document.getElementById('shapesAnimatedToggle').addEventListener('change', e => {
+          state.shapesAnimated = e.target.checked;
+          updateToggleBadge('shapesAnimatedBadge', state.shapesAnimated);
+          const animControls = document.getElementById('shapeAnimControls');
+          if (animControls) {
+            animControls.classList.toggle('opacity-40', !state.shapesAnimated);
+            animControls.classList.toggle('pointer-events-none', !state.shapesAnimated);
+          }
+        });
+
+        document.getElementById('shapeAnimSpeedRange').addEventListener('input', e => {
+          state.shapeAnimSpeed = parseInt(e.target.value, 10);
+          document.getElementById('shapeAnimSpeedVal').textContent = `${state.shapeAnimSpeed}%`;
+        });
+
+        document.getElementById('shapeAnimIntensityRange').addEventListener('input', e => {
+          state.shapeAnimIntensity = parseInt(e.target.value, 10);
+          document.getElementById('shapeAnimIntensityVal').textContent = `${state.shapeAnimIntensity}%`;
         });
 
         document.getElementById('btnRandomShapePos').addEventListener('click', () => {
@@ -3483,6 +3596,7 @@
           syncTypographyControls();
           syncMediaEnabledUI();
           updateToggleBadge('shapesEnabledBadge', state.shapesEnabled);
+          updateToggleBadge('shapesAnimatedBadge', state.shapesAnimated);
           updateToggleBadge('typographyEnabledBadge', state.typographyEnabled);
 
           if (typeof ResizeObserver !== 'undefined' && stageContainer) {
